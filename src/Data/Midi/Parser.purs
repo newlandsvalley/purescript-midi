@@ -1,11 +1,11 @@
-module MidiParser
+module Data.Midi.Parser
         ( normalise
         , parse
         , parseMidiEvent
         , translateRunningStatus
         ) where
 
-import Prelude (Unit, unit, ($), (<$>), (<*>), (*>), (<*), (+), (-), (>),
+import Prelude (Unit, unit, ($), (<$>), (<*>), (*>), (+), (-), (>),
                 (==), (>=), (<=), (&&), (>>=), (>>>), (<<<), map, pure, show)
 import Control.Alt ((<|>))
 import Data.List (List(..), (:), foldl, reverse)
@@ -19,10 +19,10 @@ import Data.Int (pow)
 import Data.Int.Bits (and, shl)
 import Text.Parsing.StringParser (Parser, runParser, try)
 import Text.Parsing.StringParser.String (anyChar, satisfy, string, char, noneOf)
-import Text.Parsing.StringParser.Combinators (choice, many, many1, manyTill, (<?>))
+import Text.Parsing.StringParser.Combinators (choice, many, (<?>))
 
 import Data.Midi
-import ParserExtra (count, skip)
+import Data.Midi.ParserExtra (count, many1Till, skip)
 
 import Debug.Trace (trace)
 
@@ -188,10 +188,9 @@ midiTrack =
   traceParse "midiTrack" <$>
    (Track <$>
      --(string "MTrk" *> int32 *> many1 midiMessage <* trackEndMessage) <?> "midi track"
-     (string "MTrk" *> int32 *> manyTill midiMessage trackEndMessage <?> "midi track")
+     (string "MTrk" *> int32 *> many1Till midiMessage trackEndMessage <?> "midi track")
    )
 
--- midiTrack = string "MTrk" *> int32 *> manyTill midiMessage trackEndMessage  <?> "midi track"
 -- Note - it is important that runningStatus is placed last because of its catch-all definition
 midiMessage :: Parser MidiMessage
 midiMessage =
@@ -445,9 +444,7 @@ buildControlChange cmd num value =
 {- build Program Change -}
 buildProgramChange :: Int -> Int -> MidiEvent
 buildProgramChange cmd num =
-  channelBuilder2 ProgramChange
-    cmd
-    num
+  channelBuilder2 ProgramChange cmd num
 
 {- build Channel AfterTouch AKA Channel Key Pressure -}
 buildChannelAfterTouch :: Int -> Int -> MidiEvent
@@ -474,8 +471,6 @@ buildTimeSig nn dd cc bb =
    expected is the expected size of the chunk
    consume the rest if the difference suggests an overspill of unwanted chunk material
 -}
-
-
 consumeOverspill :: forall a. Parser (Tuple Int a ) -> Int -> Parser a
 consumeOverspill actual expected =
   actual

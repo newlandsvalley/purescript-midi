@@ -2,13 +2,13 @@ module Test.Main where
 
 import Prelude
 import Data.Midi
+import Data.Midi.Parser (normalise, parse)
 import Node.Path as Path
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Console (CONSOLE, log, logShow)
 import Data.Either (Either(..))
 import Data.Char (fromCharCode)
 import Data.String (fromCharArray)
-import MidiParser (normalise, parse)
 import Node.Buffer (BUFFER, toArray, toString)
 import Node.Encoding (Encoding(..))
 import Node.FS (FS)
