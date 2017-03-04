@@ -4,7 +4,6 @@ import Prelude
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Console (CONSOLE, log, logShow)
 import Data.Either (Either(..))
-import Data.Midi
 import Data.Midi.Parser (normalise, parse, translateRunningStatus)
 import Node.Buffer (BUFFER, toString)
 import Node.Encoding (Encoding(..))
@@ -43,7 +42,6 @@ denormalise :: Array Int -> String
 denormalise is =
   fromCharArray $ map fromCharCode is
 -}
-
 fullParse :: String -> String
 fullParse s =
   case translateRunningStatus $ parse $ normalise $ s of

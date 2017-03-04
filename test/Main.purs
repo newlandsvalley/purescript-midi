@@ -1,7 +1,7 @@
 module Test.Main where
 
 import Prelude
-import Data.Midi
+import Data.Midi (MidiRecording)
 import Data.Midi.Parser (normalise, parse, translateRunningStatus)
 import Node.Path as Path
 import Control.Monad.Eff (Eff)
@@ -36,7 +36,7 @@ parseMidiFile fileName =
        assert $ canParse str
 
 canParse :: String -> Boolean
-canParse input = isRight $ fullParse input
+canParse = isRight <<< fullParse 
   where
     fullParse :: String -> Either String MidiRecording
     fullParse s =
