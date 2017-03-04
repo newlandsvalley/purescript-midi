@@ -26,16 +26,11 @@ import Data.Midi.ParserExtra (count, many1Till, skip)
 
 import Debug.Trace (trace)
 
-{- use for debug like this:
-   traceParse "midi" <$>
-    (
-      parseRule
-    )
--}
-
+{-
 traceParse :: forall a. String -> a -> a
 traceParse s p =
   trace s (\_ -> p)
+-}
 
 traceEvent :: MidiEvent -> MidiEvent
 traceEvent p =
@@ -165,64 +160,56 @@ midi =
 
 midiHeader :: Parser Header
 midiHeader =
-  traceParse "midiHeader" <$>
-   (string "MThd"
+  string "MThd"
     *> let
          h =
             headerChunk <$> int32 <*> int16 <*> int16 <*> int16
        in
          consumeOverspill h 6
             <?> "header"
-   )
+
 
 midiTracks :: Header -> Parser MidiRecording
 midiTracks h =
-  traceParse "midiTracks" <$>
-    (buildRecording h <$> count (unwrap h).trackCount midiTrack <?> "midi tracks")
+  buildRecording h <$> count (unwrap h).trackCount midiTrack <?> "midi tracks"
 
 {- we don't place TrackEnd events into the parse tree - there is no need.
    The end of the track is implied by the end of the event list
 -}
 midiTrack :: Parser Track
 midiTrack =
-  traceParse "midiTrack" <$>
-   (Track <$>
+  Track <$>
      --(string "MTrk" *> int32 *> many1 midiMessage <* trackEndMessage) <?> "midi track"
      (string "MTrk" *> int32 *> many1Till midiMessage trackEndMessage <?> "midi track")
-   )
+
 
 -- Note - it is important that runningStatus is placed last because of its catch-all definition
 midiMessage :: Parser MidiMessage
 midiMessage =
-  traceParse "midiMessage" <$>
-    (MidiMessage
-      <$> varInt
-      <*> midiEvent
-    )
+  MidiMessage
+    <$> varInt
+    <*> midiEvent
 
 midiEvent :: Parser MidiEvent
 midiEvent =
-  -- traceParse "midiEvent" <$>
-  traceEvent <$>
-   (choice
-    [ metaEvent
-    , noteOn
-    , noteOff
-    , noteAfterTouch
-    , controlChange
-    , programChange
-    , channelAfterTouch
-    , pitchBend
-    , runningStatus
-    ]
-   )
-      <?> "midi message"
+  -- traceEvent <$>
+    choice
+      [ metaEvent
+      , noteOn
+      , noteOff
+      , noteAfterTouch
+      , controlChange
+      , programChange
+      , channelAfterTouch
+      , pitchBend
+      , runningStatus
+      ]
+        <?> "midi message"
 
 -- metadata parsers
 metaEvent :: Parser MidiEvent
 metaEvent =
-  traceParse "metaEvent" <$>
-   (bchar 0xFF
+   bchar 0xFF
     *> choice
       [ sequenceNumber
       , text
@@ -242,7 +229,6 @@ metaEvent =
       , unspecified
       ]
         <?> "meta event"
-    )
 
 sequenceNumber :: Parser MidiEvent
 sequenceNumber =
@@ -327,10 +313,8 @@ unspecified =
 
 trackEndMessage :: Parser Unit
 trackEndMessage =
-  traceParse "trackEndMessage" <$>
-    (try
+    try
       (varInt *> bchar 0xFF *> bchar 0x2F *> bchar 0x00 *> pure unit <?> "track end")
-    )
 
 -- channel parsers
 
