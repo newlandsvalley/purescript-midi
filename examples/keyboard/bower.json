@@ -1,0 +1,9 @@
+{
+  "name": "keyboard",
+  "private": true,
+  "dependencies": {
+    "purescript-midi": "../../../purescript-midi",
+    "purescript-pux": "^7.0.0",
+    "purescript-pux-css": "^3.1.0"
+  }
+}

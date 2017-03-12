@@ -7,10 +7,10 @@ module Data.Midi
         , Ticks
         ) where
 
-import Prelude (class Show, class Eq, class Ord, (<>), show)
+import Prelude (class Show, class Eq, class Ord)
 import Data.List (List)
 import Data.Newtype (class Newtype)
-import Data.Generic (gEq, gShow, class Generic)
+import Data.Generic (gShow, class Generic)
 
 type Ticks =
     Int
@@ -80,25 +80,7 @@ derive instance genericHeader :: Generic Header
 instance showHeader :: Show Header where
   show = gShow
 
-{-
-instance showHeader :: Show Header where
-  show (Header h) = "{" <>
-                    "formatType: " <>
-                    show h.formatType <>
-                    "trackCount: " <>
-                    show h.trackCount <>
-                    "ticksPerBeat: " <>
-                    show h.ticksPerBeat
--}
-
 -- | Midi Recording
-{-}
-type MidiRecording =
-    { header :: Header
-    , tracks :: List Track
-    }
-    -}
-
 newtype MidiRecording = MidiRecording
     { header :: Header
     , tracks :: List Track
