@@ -1,9 +1,15 @@
 purescript-midi
 ===============
 
-This project includes support for MIDI in PureScript.
+This library provides MIDI support in PureScript.  It provides a MIDI parser and also support for the Web-Midi API (currently only available in Chrome).
 
-Midi parser
+Building
+--------
+
+    $ bower install   
+    $ pulp build
+
+Midi Parser
 -----------
 
 Data.Midi.Parser is a parser for MIDI that uses [purescript-string-parsers](https://pursuit.purescript.org/packages/purescript-string-parsers/2.1.0) (i.e. it is not a wrapper for MIDI.js).  It is to a large extent a port of the [Elm version](http://package.elm-lang.org/packages/newlandsvalley/elm-comidi/latest) and for this reason it uses the string parser combinator library and not [purescript-parsing](https://pursuit.purescript.org/packages/purescript-parsing/3.0.0) which I have not yet had the opportunity to investigate. It expects as input a binary MIDI file 'tunneled' as text (such as can be achieved by means of _overideMimeType_ in XMLHttpRequests). The _normalise_ function is used to make sense of this pseudo-string.
@@ -24,7 +30,7 @@ On the other hand, you may merely need to parse MIDI events (such as note on or 
 
 This version is intended to be a fully conformant parser which is happy with Type-0, Type-1 and Type-2 files.
 
-Web-Midi support
+Web-Midi Support
 ----------------
 
 Coming shortly.
