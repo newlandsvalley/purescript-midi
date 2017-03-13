@@ -20,10 +20,9 @@ import Data.Int (pow)
 import Data.Int.Bits (and, shl)
 import Text.Parsing.StringParser (Parser, runParser, try)
 import Text.Parsing.StringParser.String (anyChar, satisfy, string, char, noneOf)
-import Text.Parsing.StringParser.Combinators (choice, many, (<?>))
+import Text.Parsing.StringParser.Combinators (choice, many, many1Till, (<?>))
 
 import Data.Midi
-import Data.Midi.ParserExtra (many1Till)
 
 import Debug.Trace (trace)
 

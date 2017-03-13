@@ -10,6 +10,9 @@ import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Midi.Parser (parseMidiEvent)
 import Data.Midi.WebMidi (WEBMIDI, Device, RawMidiEvent, detectInputDevices, listen, webMidiConnect)
+import Audio.SoundFont (AUDIO, LOADFONT,MidiNote,
+                   getAudioContext, canPlayOgg, isWebAudioEnabled, getCurrentTime,
+                   loadPianoSoundFont, loadRemoteSoundFont, playNote, playNotes)
 import Prelude (class Eq, Unit, bind, const, map, show, pure, ($), (<>), (==), (/=))
 import Pux (EffModel, renderToDOM, start, noEffects)
 import Pux.CSS (center, style)

@@ -3,6 +3,7 @@
   "private": true,
   "dependencies": {
     "purescript-midi": "../../../purescript-midi",
+    "purescript-soundfonts": "https://github.com/newlandsvalley/purescript-soundfonts.git",
     "purescript-pux": "^7.0.0",
     "purescript-pux-css": "^3.1.0"
   }
