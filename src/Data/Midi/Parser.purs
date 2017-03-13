@@ -6,10 +6,11 @@ module Data.Midi.Parser
         ) where
 
 import Prelude (Unit, unit, ($), (<$>), (<*>), (*>), (+), (-), (>),
-                (==), (>=), (<=), (&&), (>>=), (>>>), (<<<), map, pure, show)
+                (==), (>=), (<=), (&&), (>>=), (>>>), (<<<), map, pure, show, void)
 import Control.Alt ((<|>))
 import Data.List (List(..), (:), foldl, reverse)
 import Data.Foldable (fold)
+import Data.Unfoldable (replicateA)
 import Data.Either (Either(..))
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Newtype (unwrap, wrap)
@@ -22,7 +23,7 @@ import Text.Parsing.StringParser.String (anyChar, satisfy, string, char, noneOf)
 import Text.Parsing.StringParser.Combinators (choice, many, (<?>))
 
 import Data.Midi
-import Data.Midi.ParserExtra (count, many1Till, skip)
+import Data.Midi.ParserExtra (many1Till)
 
 import Debug.Trace (trace)
 
@@ -37,6 +38,15 @@ traceEvent p =
   trace (show p) (\_ -> p)
 
 -- low level parsers
+
+-- | Apply a parser and skip its result.
+skip :: forall a. Parser a -> Parser Unit
+skip = void
+
+-- | Parse `n` occurences of `p`. -
+count :: forall a. Int -> Parser a -> Parser (List a)
+count = replicateA
+
 {- parse a binary 8 bit integer -}
 int8 :: Parser Int
 int8 =
