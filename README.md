@@ -35,4 +35,4 @@ Data.Midi.WebMidi provides support for [web MIDI](https://www.w3.org/TR/webmidi/
 ## Examples
 
 * __midifile__ demonstrates basic MIDI file parsing.
-* __keyboard__ demonstrates basic Web-Midi usage.
+* __keyboard__ demonstrates a playable keyboard that uses a variety of instrument soundfonts.
