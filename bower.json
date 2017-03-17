@@ -4,7 +4,8 @@
     "**/.*",
     "node_modules",
     "bower_components",
-    "output"
+    "output",
+    "examples"
   ],
   "dependencies": {
     "purescript-prelude": "^2.4.0",
