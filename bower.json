@@ -13,7 +13,8 @@
     "purescript-lists": "^3.4.0",
     "purescript-string-parsers": "^2.2.0",
     "purescript-integers": "^2.1.1",
-    "purescript-debug": "^2.0.0"
+    "purescript-debug": "^2.0.0",
+    "purescript-aff": "^2.0.3"
   },
   "devDependencies": {
     "purescript-psci-support": "^2.0.0"
