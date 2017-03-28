@@ -1,9 +1,9 @@
 module Data.Midi
         ( Track(..)
         , Header(..)
-        , MidiEvent(..)
-        , MidiMessage(..)
-        , MidiRecording(..)
+        , Event(..)
+        , Message(..)
+        , Recording(..)
         , Ticks
         ) where
 
@@ -16,7 +16,7 @@ type Ticks =
     Int
 
 -- |  Midi Event
-data MidiEvent
+data Event
     = -- meta messages
       SequenceNumber Int
     | Text String
@@ -44,21 +44,21 @@ data MidiEvent
     | PitchBend Int Int
     | RunningStatus Int Int
 
-derive instance genericMidiEvent :: Generic MidiEvent
-instance showMidiEvent :: Show MidiEvent where
+derive instance genericEvent :: Generic Event
+instance showEvent :: Show Event where
   show = gShow
 
 -- | Midi Message
-data MidiMessage = MidiMessage Ticks MidiEvent
+data Message = Message Ticks Event
 
-derive instance genericMidiMessage :: Generic MidiMessage
-instance showMidiMessage :: Show MidiMessage where
+derive instance genericMessage :: Generic Message
+instance showMessage :: Show Message where
   show = gShow
 
 
 -- | Midi Track
 newtype Track = Track
-  (List MidiMessage)
+  (List Message)
 
 derive instance newtypeTrack :: Newtype Track _
 derive instance genericTrack :: Generic Track
@@ -81,13 +81,13 @@ instance showHeader :: Show Header where
   show = gShow
 
 -- | Midi Recording
-newtype MidiRecording = MidiRecording
+newtype Recording = Recording
     { header :: Header
     , tracks :: List Track
     }
 
 
-derive instance newtypeMidirecording :: Newtype MidiRecording _
-derive instance genericMidiRecording :: Generic MidiRecording
-instance showMidiRecording :: Show MidiRecording where
+derive instance newtypeRecording :: Newtype Recording _
+derive instance genericRecording :: Generic Recording
+instance showRecording :: Show Recording where
   show = gShow

@@ -32,7 +32,7 @@ traceParse s p =
   trace s (\_ -> p)
 -}
 
-traceEvent :: MidiEvent -> MidiEvent
+traceEvent :: Event -> Event
 traceEvent p =
   trace (show p) (\_ -> p)
 
@@ -143,7 +143,7 @@ rest =
 
 -- top level parsers
 
-midi :: Parser MidiRecording
+midi :: Parser Recording
 midi =
   -- midiHeader `andThen` midiTracks
   -- midiHeader |> andThen midiTracks
@@ -178,7 +178,7 @@ midiHeader =
             <?> "header"
 
 
-midiTracks :: Header -> Parser MidiRecording
+midiTracks :: Header -> Parser Recording
 midiTracks h =
   buildRecording h <$> count (unwrap h).trackCount midiTrack <?> "midi tracks"
 
@@ -193,13 +193,13 @@ midiTrack =
 
 
 -- Note - it is important that runningStatus is placed last because of its catch-all definition
-midiMessage :: Parser MidiMessage
+midiMessage :: Parser Message
 midiMessage =
-  MidiMessage
+  Message
     <$> varInt
     <*> midiEvent
 
-midiEvent :: Parser MidiEvent
+midiEvent :: Parser Event
 midiEvent =
   -- traceEvent <$>
     choice
@@ -216,7 +216,7 @@ midiEvent =
         <?> "midi message"
 
 -- metadata parsers
-metaEvent :: Parser MidiEvent
+metaEvent :: Parser Event
 metaEvent =
    bchar 0xFF
     *> choice
@@ -239,7 +239,7 @@ metaEvent =
       ]
         <?> "meta event"
 
-sequenceNumber :: Parser MidiEvent
+sequenceNumber :: Parser Event
 sequenceNumber =
   SequenceNumber <$> (bchar 0x00 *> bchar 0x02 *> int16 <?> "sequence number")
 
@@ -251,60 +251,60 @@ parseMetaString target =
     <$>
       (bchar target *> varInt >>= (\l -> count l anyChar))
 
-text :: Parser MidiEvent
+text :: Parser Event
 text =
   Text <$> parseMetaString 0x01 <?> "text"
 
-copyright :: Parser MidiEvent
+copyright :: Parser Event
 copyright =
   Copyright <$> parseMetaString 0x02 <?> "copyright"
 
-trackName :: Parser MidiEvent
+trackName :: Parser Event
 trackName =
   TrackName <$> parseMetaString 0x03 <?> "track name"
 
 
-instrumentName :: Parser MidiEvent
+instrumentName :: Parser Event
 instrumentName =
   InstrumentName <$> parseMetaString 0x04 <?> "instrument name"
 
-lyrics :: Parser MidiEvent
+lyrics :: Parser Event
 lyrics =
   Lyrics <$> parseMetaString 0x05 <?> "lyrics"
 
-marker :: Parser MidiEvent
+marker :: Parser Event
 marker =
   Marker <$> parseMetaString 0x06 <?> "marker"
 
-cuePoint :: Parser MidiEvent
+cuePoint :: Parser Event
 cuePoint =
   CuePoint <$> parseMetaString 0x07 <?> "cue point"
 
-channelPrefix :: Parser MidiEvent
+channelPrefix :: Parser Event
 channelPrefix =
   ChannelPrefix <$> (bchar 0x20 *> bchar 0x01 *> int8 <?> "channel prefix")
 
-tempoChange :: Parser MidiEvent
+tempoChange :: Parser Event
 tempoChange =
   Tempo <$> (bchar 0x51 *> bchar 0x03 *> int24) <?> "tempo change"
 
-smpteOffset :: Parser MidiEvent
+smpteOffset :: Parser Event
 smpteOffset =
   bchar 0x54 *> bchar 0x03 *> (SMPTEOffset <$> int8 <*> int8 <*> int8 <*> int8 <*> int8 <?> "SMTPE offset")
 
-timeSignature :: Parser MidiEvent
+timeSignature :: Parser Event
 timeSignature =
   bchar 0x58 *> bchar 0x04 *> (buildTimeSig <$> int8 <*> int8 <*> int8 <*> int8) <?> "time signature"
 
-keySignature :: Parser MidiEvent
+keySignature :: Parser Event
 keySignature =
   bchar 0x59 *> bchar 0x02 *> (KeySignature <$> signedInt8 <*> int8)
 
-sequencerSpecific :: Parser MidiEvent
+sequencerSpecific :: Parser Event
 sequencerSpecific =
   SequencerSpecific <$> parseMetaString 0x7F <?> "sequencer specific"
 
-sysEx :: Parser MidiEvent
+sysEx :: Parser Event
 sysEx =
   -- SysEx <$> (String.fromList <$> (bchoice 0xF0 0xF7 *> varInt `andThen` (\l -> count l anyChar))) <?> "system exclusive"
   SysEx <$> (catChars <$> (bchoice 0xF0 0xF7 *> varInt >>= (\l -> count l anyChar))) <?> "system exclusive"
@@ -315,7 +315,7 @@ sysEx =
    We cope by accepting any value here except TrackEnd which is the terminating condition for the list of MidiEvents
    and so must not be recognized here
 -}
-unspecified :: Parser MidiEvent
+unspecified :: Parser Event
 unspecified =
   -- Unspecified <$> notTrackEnd <*> (int8 `andThen` (\l -> count l int8))
   Unspecified <$> notTrackEnd <*> (int8 >>= (\l -> count l int8))
@@ -327,38 +327,38 @@ trackEndMessage =
 
 -- channel parsers
 
-noteOn :: Parser MidiEvent
+noteOn :: Parser Event
 noteOn =
   buildNote <$> brange 0x90 0x9F <*> int8 <*> int8 <?> "note on"
 
-noteOff :: Parser MidiEvent
+noteOff :: Parser Event
 noteOff =
   buildNoteOff <$> brange 0x80 0x8F <*> int8 <*> int8 <?> "note off"
 
-noteAfterTouch :: Parser MidiEvent
+noteAfterTouch :: Parser Event
 noteAfterTouch =
   buildNoteAfterTouch <$> brange 0xA0 0xAF <*> int8 <*> int8 <?> "note after touch"
 
-controlChange :: Parser MidiEvent
+controlChange :: Parser Event
 controlChange =
   buildControlChange <$> brange 0xB0 0xBF <*> int8 <*> int8 <?> "control change"
 
-programChange :: Parser MidiEvent
+programChange :: Parser Event
 programChange =
   buildProgramChange <$> brange 0xC0 0xCF <*> int8 <?> "program change"
 
-channelAfterTouch :: Parser MidiEvent
+channelAfterTouch :: Parser Event
 channelAfterTouch =
   buildChannelAfterTouch <$> brange 0xD0 0xDF <*> int8 <?> "channel after touch"
 
-pitchBend :: Parser MidiEvent
+pitchBend :: Parser Event
 pitchBend =
   buildPitchBend <$> brange 0xE0 0xEF <*> int8 <*> int8 <?> "pitch bend"
 
 {- running status is somewhat anomalous.  It inherits the 'type' of the last event parsed, which must be a channel event.
    This inherited channel event type is not put into the parse tree - this is left to an interpreter
 -}
-runningStatus :: Parser MidiEvent
+runningStatus :: Parser Event
 runningStatus =
   RunningStatus <$> brange 0x00 0x7F <*> int8 <?> "running status"
 
@@ -378,12 +378,12 @@ headerChunk l a b c =
   in
     Tuple l (Header header)
 
-buildRecording :: Header -> List Track -> MidiRecording
+buildRecording :: Header -> List Track -> Recording
 buildRecording h ts =
-  MidiRecording { header: h, tracks : ts }
+  Recording { header: h, tracks : ts }
 
 {- build NoteOn (unless the velocity is zero in which case NoteOff) -}
-buildNote :: Int -> Int -> Int -> MidiEvent
+buildNote :: Int -> Int -> Int -> Event
 buildNote cmd note velocity =
   let
     channel =
@@ -401,7 +401,7 @@ buildNote cmd note velocity =
         NoteOn channel note velocity
 
 {- abstract builders that construct MidiEvents that all have the same shape -}
-channelBuilder3 :: (Int -> Int -> Int -> MidiEvent) -> Int -> Int -> Int -> MidiEvent
+channelBuilder3 :: (Int -> Int -> Int -> Event) -> Int -> Int -> Int -> Event
 channelBuilder3 construct cmd x y =
   let
     channel =
@@ -410,7 +410,7 @@ channelBuilder3 construct cmd x y =
   in
     construct channel x y
 
-channelBuilder2 :: (Int -> Int -> MidiEvent) -> Int -> Int -> MidiEvent
+channelBuilder2 :: (Int -> Int -> Event) -> Int -> Int -> Event
 channelBuilder2 construct cmd x =
   let
     channel =
@@ -420,37 +420,37 @@ channelBuilder2 construct cmd x =
     construct channel x
 
 {- build NoteOff -}
-buildNoteOff :: Int -> Int -> Int -> MidiEvent
+buildNoteOff :: Int -> Int -> Int -> Event
 buildNoteOff cmd note velocity =
   channelBuilder3 NoteOff cmd note velocity
 
 {- build Note AfterTouch AKA Polyphonic Key Pressure -}
-buildNoteAfterTouch :: Int -> Int -> Int -> MidiEvent
+buildNoteAfterTouch :: Int -> Int -> Int -> Event
 buildNoteAfterTouch cmd note pressure =
   channelBuilder3 NoteAfterTouch cmd note pressure
 
 {- build Control Change -}
-buildControlChange :: Int -> Int -> Int -> MidiEvent
+buildControlChange :: Int -> Int -> Int -> Event
 buildControlChange cmd num value =
   channelBuilder3 ControlChange cmd num value
 
 {- build Program Change -}
-buildProgramChange :: Int -> Int -> MidiEvent
+buildProgramChange :: Int -> Int -> Event
 buildProgramChange cmd num =
   channelBuilder2 ProgramChange cmd num
 
 {- build Channel AfterTouch AKA Channel Key Pressure -}
-buildChannelAfterTouch :: Int -> Int -> MidiEvent
+buildChannelAfterTouch :: Int -> Int -> Event
 buildChannelAfterTouch cmd num =
   channelBuilder2 ChannelAfterTouch cmd num
 
 {- build Pitch Bend -}
-buildPitchBend :: Int -> Int -> Int -> MidiEvent
+buildPitchBend :: Int -> Int -> Int -> Event
 buildPitchBend cmd lsb msb =
   channelBuilder2 PitchBend cmd $ lsb + shiftLeftSeven msb
 
 {- build a Time Signature -}
-buildTimeSig :: Int -> Int -> Int -> Int -> MidiEvent
+buildTimeSig :: Int -> Int -> Int -> Int -> Event
 buildTimeSig nn dd cc bb =
   let
     denom =
@@ -496,7 +496,7 @@ makeTuple a b =
 catChars :: List Char -> String
 catChars = fold <<< map singleton
 
-translateNextEvent :: Tuple MidiEvent Track -> MidiMessage -> Tuple  MidiEvent Track
+translateNextEvent :: Tuple Event Track -> Message -> Tuple  Event Track
 translateNextEvent acc nextMessage =
   let
     -- ( state, events ) =  acc
@@ -506,7 +506,7 @@ translateNextEvent acc nextMessage =
         -- ( ticks, next ) =  nextMessage
   in
     case nextMessage of
-      MidiMessage ticks (RunningStatus x y) ->
+      Message ticks (RunningStatus x y) ->
         let
           translatedStatus =
             interpretRS state x y
@@ -518,15 +518,15 @@ translateNextEvent acc nextMessage =
 
             _ ->
               -- could translate the running status so adopt it
-              Tuple state ( Track ((MidiMessage ticks translatedStatus) : events) )
+              Tuple state ( Track ((Message ticks translatedStatus) : events) )
 
-      MidiMessage _ other ->
+      Message _ other ->
         Tuple other (Track (nextMessage : events))
 
 
 -- just update the state
 {- we can interpret the running status if we have a legitimate last event state which is a channel voice event -}
-interpretRS :: MidiEvent -> Int -> Int -> MidiEvent
+interpretRS :: Event -> Int -> Int -> Event
 interpretRS last x y =
   case last of
     NoteOn chan _ _ ->
@@ -576,7 +576,7 @@ translateAllRunningStatus wrappedTrack =
 -- exported functions
 
 -- | Parse a MIDI event
-parseMidiEvent :: String -> Either String MidiEvent
+parseMidiEvent :: String -> Either String Event
 parseMidiEvent s =
     case runParser midiEvent s of
         Right n ->
@@ -596,7 +596,7 @@ parseMidiEvent s =
 
 
 -- | entry point - Parse a normalised MIDI file image
-parse :: String -> Either String MidiRecording
+parse :: String -> Either String Recording
 parse s =
 
     case runParser midi s of
@@ -629,7 +629,7 @@ normalise =
         toCharArray >>> map f >>> fromCharArray
 
 -- | translate the Running Status messages in each track to the expanded form (NoteOn/NoteOff etc)
-translateRunningStatus :: Either String MidiRecording -> Either String MidiRecording
+translateRunningStatus :: Either String Recording -> Either String Recording
 translateRunningStatus res =
     case res of
         Right mr ->
@@ -638,7 +638,7 @@ translateRunningStatus res =
                     -- second mr |> List.
                     map translateAllRunningStatus (unwrap mr).tracks
             in
-                Right (MidiRecording { header : (unwrap mr).header, tracks : tracks })
+                Right (Recording { header : (unwrap mr).header, tracks : tracks })
 
         err ->
             err
