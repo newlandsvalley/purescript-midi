@@ -13,7 +13,7 @@ import Data.Generic (gEq, class Generic)
 import Data.Map (Map, fromFoldable, lookup)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Int (toNumber)
-import Data.Midi (MidiEvent(..))
+import Data.Midi (Event(..))
 import Data.Midi.Parser (parseMidiEvent)
 import Data.Midi.WebMidi (WEBMIDI, Device, RawMidiEvent, detectInputDevices, listen, webMidiConnect)
 import Data.Tuple (Tuple(..))
@@ -178,7 +178,7 @@ playMidiEvent msg state =
 
 -- | recognise and act on a control message and save to the model state
 -- |    At the moment, we just recognise volume changes
-recogniseControlMessage :: Either String MidiEvent -> State -> State
+recogniseControlMessage :: Either String Event -> State -> State
 recogniseControlMessage event state =
   case event of
     Right (ControlChange channel 7 amount) ->
