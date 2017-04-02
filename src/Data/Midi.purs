@@ -10,7 +10,7 @@ module Data.Midi
 import Prelude (class Show, class Eq, class Ord)
 import Data.List (List)
 import Data.Newtype (class Newtype)
-import Data.Generic (gShow, class Generic)
+import Data.Generic (gShow, gEq, class Generic)
 
 type Ticks =
     Int
@@ -47,6 +47,8 @@ data Event
 derive instance genericEvent :: Generic Event
 instance showEvent :: Show Event where
   show = gShow
+instance eqEvent :: Eq Event where
+  eq = gEq
 
 -- | Midi Message
 data Message = Message Ticks Event
@@ -54,7 +56,8 @@ data Message = Message Ticks Event
 derive instance genericMessage :: Generic Message
 instance showMessage :: Show Message where
   show = gShow
-
+instance eqMessage :: Eq Message where
+  eq = gEq
 
 -- | Midi Track
 newtype Track = Track
@@ -64,6 +67,8 @@ derive instance newtypeTrack :: Newtype Track _
 derive instance genericTrack :: Generic Track
 instance showTrack :: Show Track where
   show = gShow
+instance eqTrack :: Eq Track where
+  eq = gEq
 
 -- | Midi Header
 newtype Header = Header
@@ -86,8 +91,9 @@ newtype Recording = Recording
     , tracks :: List Track
     }
 
-
 derive instance newtypeRecording :: Newtype Recording _
 derive instance genericRecording :: Generic Recording
 instance showRecording :: Show Recording where
   show = gShow
+instance eqRecording :: Eq Recording where
+  eq = gEq
