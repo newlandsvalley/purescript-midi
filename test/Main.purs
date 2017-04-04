@@ -40,4 +40,4 @@ canParse = isRight <<< fullParse
   where
     fullParse :: String -> Either String Recording
     fullParse s =
-       translateRunningStatus $ parse $ normalise s
+      (translateRunningStatus <<< parse <<< normalise) s

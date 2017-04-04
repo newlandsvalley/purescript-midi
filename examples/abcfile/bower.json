@@ -1,0 +1,10 @@
+{
+  "name": "abcfile",
+  "private": true,
+  "dependencies": {
+    "purescript-midi": "../../../purescript-midi",
+    "purescript-abc-parser": "https://github.com/newlandsvalley/purescript-abc-parser.git",
+    "purescript-pux": "^7.0.0",
+    "purescript-pux-css": "^3.1.0"
+  }
+}
