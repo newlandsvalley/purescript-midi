@@ -1,21 +1,24 @@
 module Main where
 
-import CSS.TextAlign (textAlign)
+import CSS.TextAlign (center, textAlign)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Exception (EXCEPTION)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Midi.Parser (parse, normalise, translateRunningStatus)
 import Prelude (Unit, bind, const, show, pure, ($), (<>))
-import Pux (EffModel, renderToDOM, start, noEffects)
-import Pux.CSS (center, style)
-import Pux.Html (Html, Attribute, text, h1, input, div, p)
-import Pux.Html.Events (onChange)
-import Pux.Html.Attributes (type_, id_, accept)
+import Pux (EffModel, noEffects, start)
+import Pux.DOM.Events (onChange)
+import Pux.DOM.HTML (HTML)
+import Pux.DOM.HTML.Attributes (style)
+import Pux.Renderer.React (renderToDOM)
+import Text.Smolder.HTML (div, h1, p, input)
+import Text.Smolder.HTML.Attributes (type', id, accept)
+import Text.Smolder.Markup (Attribute, text, (#!), (!))
 import Signal.Channel (CHANNEL)
 import BinaryFileIO.FileIO
 
-data Action
+data Event
   = NoOp
   | RequestFileUpload
   | FileLoaded Filespec
@@ -28,17 +31,17 @@ initialState = {
     filespec : Nothing
   }
 
-update :: Action -> State -> EffModel State Action (fileio :: FILEIO)
-update NoOp state =  noEffects $ state
-update RequestFileUpload state =
+foldp :: Event -> State -> EffModel State Event (fileio :: FILEIO)
+foldp NoOp state =  noEffects $ state
+foldp RequestFileUpload state =
  { state: state
    , effects:
      [ do
          filespec <- loadBinaryFile
-         pure $ FileLoaded filespec
+         pure $ Just (FileLoaded filespec)
      ]
   }
-update (FileLoaded filespec) state =
+foldp (FileLoaded filespec) state =
    noEffects $ saveFilespec filespec state
 
 saveFilespec :: Filespec -> State -> State
@@ -61,33 +64,27 @@ fullParse s =
     Right midi ->
       (show midi)
 
-view :: State -> Html Action
+view :: State -> HTML Event
 view state =
-  div []
-    [
-      h1 [ centreStyle ] [ text "load a MIDI file" ]
-      , input
-            [ type_ "file"
-            , id_ "fileinput"
-            , accept ".midi"
-            , onChange (const RequestFileUpload)
-            ]
-            []
-      , p [] [ text $ viewParsedFile state]
-    ]
+   div  do
+     h1 ! centreStyle $ text "view a MIDI file"
+     div do
+       input ! type' "file" ! id "fileinput" ! accept ".midi"
+         #! onChange (const RequestFileUpload)
+       p $ text $ viewParsedFile state
 
-centreStyle :: forall a. Attribute a
+centreStyle :: Attribute
 centreStyle =
-    style $ do
-       textAlign center
+  style do
+    textAlign center
 
 main :: Eff (channel :: CHANNEL, err :: EXCEPTION, fileio :: FILEIO ) Unit
 main = do
   app <- start
     { initialState: initialState
-    , update: update
-    , view: view
+    , view
+    , foldp
     , inputs: []
     }
 
-  renderToDOM "#app" app.html
+  renderToDOM "#app" app.markup app.input
