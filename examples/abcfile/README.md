@@ -1,5 +1,5 @@
-MIDI file example
-=================
+ABC file example
+================
 
 This example shows how you might load an ABC file and then convert it to a MIDI recording.
 
