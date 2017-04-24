@@ -1,8 +1,6 @@
+/dist/example.js
+/output/
 /bower_components/
 /node_modules/
 /.pulp-cache/
-/output/
-/deprecated/
-/examples/abcplayer/
 /.psc*
-/.psa*
