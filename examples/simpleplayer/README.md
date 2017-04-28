@@ -6,6 +6,7 @@ uninterrupted Web-Audio melody. Each MIDI NoteOn event produces a MidiNote
 (an instruction to Web-Audio to play through the current SoundFont). This
 has an offset which is the time delay after which the note should be played
 and is built simply by accumulating the elapsed time of each MIDI message.
+Each note rings for a second.
 
 Building
 --------

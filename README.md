@@ -37,5 +37,9 @@ Data.Midi.WebMidi provides support for [web MIDI](https://www.w3.org/TR/webmidi/
 * __midifile__ demonstrates basic MIDI file parsing.
 * __abcfile__ demonstrates converting an ABC file to a MIDI recording.
 * __keyboard__ demonstrates a playable keyboard that uses a variety of instrument soundfonts.
+
+and three different players: 
+
 * __simpleplayer__ demonstrates playing a MIDI file by converting to a single uninterruptible Web-Audio graph.
 * __player__ demonstrates a MIDI player widget that plays each note as an individual Web-Audio instruction.
+* __hybridplayer__ demonstrates a MIDI player widget that plays a phrase (consisting of a bunch of notes) before allowing a UI update.
