@@ -1,16 +1,16 @@
 module HybridPerformance (Melody, MidiPhrase, toPerformance) where
 
 import Control.Monad.State as ControlState
-import Audio.SoundFont (MidiNote)
-import Data.Midi as Midi
-import Data.Tuple (Tuple(..), fst, snd)
-import Data.Array ((:), reverse)
-import Data.List (List(..), head)
 import Data.Map as Map
+import Data.Midi as Midi
+import Audio.SoundFont (MidiNote)
+import Data.Array ((:), reverse)
+import Data.Int (toNumber)
+import Data.List (List(..), head)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (unwrap)
-import Data.Int (toNumber)
-import Prelude (bind, map, pure, ($), (*), (+), (-), (/), (>))
+import Data.Tuple (Tuple(..), fst, snd)
+import Prelude (bind, map, pure, ($), (*), (+), (-), (/), (>), (&&))
 
 type MidiPhrase = Array MidiNote
 type Melody = Array MidiPhrase
@@ -182,7 +182,12 @@ finaliseNote channel pitch velocity endOffset tstate =
           currentPhrase = finalisedNote : tstate.currentPhrase
         in
           -- split into phrases
-          if (endOffset - tstate.phraseOffset) > phraseSize then
+          -- we do this if the phrase has grown beyond the limit
+          -- and there aren't any other half-built notes left
+          -- which would indicate a chord
+          -- (i.e. the currentNoteMap must be empty)
+          if ((endOffset - tstate.phraseOffset) > phraseSize)
+                && (Map.isEmpty currentNoteMap) then
             tstate { currentNoteMap = currentNoteMap
                    , noteOffset = endOffset
                    , phraseOffset = endOffset

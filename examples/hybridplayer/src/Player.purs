@@ -172,12 +172,18 @@ viewPhraseIndex state =
 
 debugNote  :: MidiNote -> HTML Event
 debugNote n =
-  text $ (" pitch:" <> show n.id <> " offset:" <> show n.timeOffset <> " length:" <> show n.duration)
+  text $ ("{ pitch:" <> show n.id <> " offset:" <> show n.timeOffset <> " length:" <> show n.duration <> " }")
 
 debugPhrase :: MidiPhrase -> HTML Event
 debugPhrase phrase =
-   traverse_ debugNote phrase
+  div do
+    traverse_ debugNote phrase
 
+debugMelody :: State -> HTML Event
+debugMelody state =
+  traverse_ debugPhrase state.melody
+
+{-
 debugMelody :: State -> HTML Event
 debugMelody state =
   let
@@ -189,6 +195,7 @@ debugMelody state =
           debugPhrase phrase
           -- p $ text ("total phrase delay: " <> show state.playerState.lastPhraseLength)
       _ -> p $ text ""
+-}
 
 view :: State -> HTML Event
 view state =
@@ -199,7 +206,8 @@ view state =
          input ! type' "file" ! id "fileinput" ! accept ".midi"
            #! onChange (const RequestFileUpload)
          player state
-         debugMelody state
+         div do
+           debugMelody state
   else
     button #! onClick (const RequestLoadFonts) $ text "load soundfonts"
 
