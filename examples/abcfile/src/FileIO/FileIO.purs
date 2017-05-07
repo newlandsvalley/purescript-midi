@@ -5,7 +5,7 @@ module FileIO.FileIO
   , saveTextFile ) where
 
 import Prelude (Unit)
-import Control.Monad.Eff (Eff)
+import Control.Monad.Eff (kind Effect, Eff)
 import Control.Monad.Aff (Aff, makeAff)
 
 
@@ -16,7 +16,7 @@ type Filespec =
   }
 
 -- | File IO Effect
-foreign import data FILEIO :: !
+foreign import data FILEIO :: Effect
 
 foreign import loadTextFileImpl :: forall e. (Filespec -> Eff e Unit) -> Eff e Unit
 

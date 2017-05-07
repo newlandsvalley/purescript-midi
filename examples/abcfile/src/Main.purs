@@ -7,7 +7,7 @@ import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Abc.Parser (parse)
 import Data.Abc.Midi (toMidi)
-import Prelude (Unit, bind, const, show, pure, ($), (<>))
+import Prelude (Unit, bind, discard, const, show, pure, ($), (<>))
 import Pux (EffModel, noEffects, start)
 import Pux.DOM.Events (onChange)
 import Pux.DOM.HTML (HTML)
@@ -79,7 +79,7 @@ centreStyle =
   style do
     textAlign center
 
-main :: Eff (channel :: CHANNEL, err :: EXCEPTION, fileio :: FILEIO ) Unit
+main :: Eff (channel :: CHANNEL, exception :: EXCEPTION, fileio :: FILEIO ) Unit
 main = do
   app <- start
     { initialState: initialState
