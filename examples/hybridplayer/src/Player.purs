@@ -12,17 +12,17 @@ import CSS.Display (display, float, floatLeft, inlineBlock, position, relative)
 import CSS.Geometry (width, height, padding, margin)
 import CSS.Overflow (hidden, overflow)
 import CSS.Size (px)
-import Control.Monad.Aff (later')
+import Control.Monad.Aff (delay)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
 import Data.Array (null, index, length)
 import Data.Either (Either(..))
 import Data.Foldable (traverse_)
-import Data.Int (round)
 import Data.Maybe (Maybe(..))
+import Data.Time.Duration (Milliseconds(..))
 import Data.Midi.Parser (parse, normalise, translateRunningStatus)
 import HybridPerformance (Melody, MidiPhrase, toPerformance)
-import Prelude (bind, const, negate, not, show, pure, ($), (<>), (<<<), (||), (+), (*))
+import Prelude (bind, const, discard, negate, not, show, pure, ($), (<>), (<<<), (||), (+), (*))
 import Pux (EffModel, noEffects)
 import Pux.DOM.Events (onClick, onChange)
 import Pux.DOM.HTML (HTML)
@@ -127,22 +127,27 @@ processFile filespec state =
 
 -- | step through the MIDI events, one by one
 step :: forall e. State -> Number -> EffModel State Event (au :: AUDIO | e)
-step state delay =
+step state sDelay =
   case locateNextPhrase state of
     Just (midiPhrase) ->
       let
-        msDelay = round $ delay * 1000.0
+        msDelay :: Number
+        msDelay = sDelay * 1000.0
         -- set the new state
         newPlayerState =
           state.playerState { phraseIndex = state.playerState.phraseIndex + 1
-                            , lastPhraseLength = delay
+                            , lastPhraseLength = sDelay
                             }
       in
         { state: state { playerState = newPlayerState }
         , effects:
           [ do
+              _ <- delay (Milliseconds msDelay)
+              nextDelay <- liftEff (playEvent midiPhrase)
+              {-}
               nextDelay <-
                   later' msDelay $ liftEff (playEvent midiPhrase)
+              -}
               pure $ Just (StepMidi nextDelay)
           ]
         }

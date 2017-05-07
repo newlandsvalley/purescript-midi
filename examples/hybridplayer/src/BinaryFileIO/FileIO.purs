@@ -4,7 +4,7 @@ module BinaryFileIO.FileIO
   , loadBinaryFile ) where
 
 import Control.Monad.Aff (Aff, makeAff)
-import Control.Monad.Eff (Eff)
+import Control.Monad.Eff (kind Effect, Eff)
 import Prelude (Unit)
 
 -- | a file name and its contents
@@ -15,7 +15,7 @@ type Filespec =
   }
 
 -- | File IO Effect
-foreign import data FILEIO :: !
+foreign import data FILEIO :: Effect
 
 foreign import loadBinaryFileImpl :: forall e. (Filespec -> Eff e Unit) -> Eff e Unit
 

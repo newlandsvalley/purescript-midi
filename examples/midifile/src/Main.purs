@@ -6,7 +6,7 @@ import Control.Monad.Eff.Exception (EXCEPTION)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Midi.Parser (parse, normalise, translateRunningStatus)
-import Prelude (Unit, bind, const, show, pure, ($), (<>))
+import Prelude (Unit, bind, const, discard, show, pure, ($), (<>))
 import Pux (EffModel, noEffects, start)
 import Pux.DOM.Events (onChange)
 import Pux.DOM.HTML (HTML)
@@ -78,7 +78,7 @@ centreStyle =
   style do
     textAlign center
 
-main :: Eff (channel :: CHANNEL, err :: EXCEPTION, fileio :: FILEIO ) Unit
+main :: Eff (channel :: CHANNEL, exception :: EXCEPTION, fileio :: FILEIO ) Unit
 main = do
   app <- start
     { initialState: initialState

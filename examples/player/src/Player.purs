@@ -13,17 +13,18 @@ import CSS.Display (display, float, floatLeft, inlineBlock, position, relative)
 import CSS.Geometry (width, height, padding, margin)
 import CSS.Overflow (hidden, overflow)
 import CSS.Size (px)
-import Control.Monad.Aff (later')
+import Control.Monad.Aff (delay)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
 import Data.Either (Either(..), isLeft, fromRight)
 import Data.Int (toNumber)
+import Data.Time.Duration (Milliseconds(..))
 import Data.List (List(..), head, index, length)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (unwrap)
 import Data.Midi.Parser (parse, normalise, translateRunningStatus)
 import Partial.Unsafe (unsafePartial)
-import Prelude (bind, const, negate, not, show, pure, ($), (<>), (>), (<<<), (||), (+), (*), (/))
+import Prelude (bind, const, discard, negate, not, show, pure, ($), (<>), (>), (<<<), (||), (+), (*), (/))
 import Pux (EffModel, noEffects)
 import Pux.DOM.Events (onClick, onChange)
 import Pux.DOM.HTML (HTML)
@@ -157,15 +158,17 @@ step state =
                             , tempo = tempo
                             }
         -- work out the delay for this message
-        delay =
-          (ticks * tempo)  / (newPlayerState.ticksPerBeat * 1000)
+        delayPeriod :: Number
+        delayPeriod =
+          toNumber (ticks * tempo)  / toNumber (newPlayerState.ticksPerBeat * 1000)
       in
         { state: state { playerState = newPlayerState }
         , effects:
           [ do
               done <-
-                if (ticks > 0) then
-                  later' delay $ liftEff (playEvent midiEvent)
+                if (ticks > 0) then do
+                  _ <- delay (Milliseconds delayPeriod)
+                  liftEff (playEvent midiEvent)
                 else
                   liftEff (playEvent midiEvent)
               pure (Just StepMidi)

@@ -12,7 +12,7 @@ import Data.Either (Either(..))
 import Data.Foldable (traverse_)
 import Data.Maybe (Maybe(..))
 import Data.Midi.Parser (parse, normalise, translateRunningStatus)
-import Prelude (Unit, bind, const, pure, show, ($), (<>))
+import Prelude (Unit, bind, const, discard, pure, show, ($), (<>))
 import Pux (EffModel, noEffects, start)
 import Pux.DOM.Events (onChange, onClick)
 import Pux.DOM.HTML (HTML)
@@ -141,7 +141,7 @@ centreStyle =
   style do
     textAlign center
 
-main :: Eff (channel :: CHANNEL, err :: EXCEPTION, fileio :: FILEIO, au :: AUDIO ) Unit
+main :: Eff (channel :: CHANNEL, exception :: EXCEPTION, fileio :: FILEIO, au :: AUDIO ) Unit
 main = do
   app <- start
     { initialState: initialState

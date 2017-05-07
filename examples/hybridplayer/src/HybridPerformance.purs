@@ -10,7 +10,7 @@ import Data.List (List(..), head)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (unwrap)
 import Data.Tuple (Tuple(..), fst, snd)
-import Prelude (bind, map, pure, ($), (*), (+), (-), (/), (>), (&&))
+import Prelude (bind, discard, map, pure, ($), (*), (+), (-), (/), (>), (&&))
 
 type MidiPhrase = Array MidiNote
 type Melody = Array MidiPhrase
@@ -83,7 +83,7 @@ transformTrack Nil =
     retrieveMelody
 transformTrack (Cons m ms) =
   do
-    transformMessage m
+    _ <- transformMessage m
     transformTrack ms
 
 transformMessage :: Midi.Message -> ControlState.State TransformationState Melody

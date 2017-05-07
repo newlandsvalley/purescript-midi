@@ -9,7 +9,6 @@ function loadBinaryFileImpl(onSuccess) {
       reader.onload = function(event) {
         var contents = event.target.result;
         var filespec = {contents:contents, name:selectedFile.name};
-        // console.log("reader.onload File contents: " + contents);
         onSuccess (filespec)();
       };
 

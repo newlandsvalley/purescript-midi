@@ -3,6 +3,6 @@
   "private": true,
   "dependencies": {
     "purescript-midi": "../../../purescript-midi",
-    "purescript-pux": "^8.7.0"
+    "purescript-pux": "^9.1.0"
   }
 }

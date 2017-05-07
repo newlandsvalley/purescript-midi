@@ -9,7 +9,7 @@ import Data.List (List(..), head)
 import Data.Maybe (Maybe, fromMaybe)
 import Data.Newtype (unwrap)
 import Data.Int (toNumber)
-import Prelude (bind, map, pure, ($), (*), (+), (/), (==))
+import Prelude (bind, discard, map, pure, ($), (*), (+), (/), (==))
 
 -- | the state to thread through the computation
 -- | which translates MIDI to a Web-Audio graph
@@ -56,7 +56,7 @@ transformTrack Nil =
     retrieveMelody
 transformTrack (Cons m ms) =
   do
-    transformMessage m
+    _ <- transformMessage m
     transformTrack ms
 
 transformMessage :: Midi.Message -> ControlState.State TransformationState (Array MidiNote)
