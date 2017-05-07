@@ -24,17 +24,19 @@ import Text.Parsing.StringParser.Combinators (choice, many, many1Till, (<?>))
 
 import Data.Midi
 
+{- debugging utilities
+
 import Debug.Trace (trace)
 
-{-
 traceParse :: forall a. String -> a -> a
 traceParse s p =
   trace s (\_ -> p)
--}
 
 traceEvent :: Event -> Event
 traceEvent p =
   trace (show p) (\_ -> p)
+
+-}
 
 -- low level parsers
 
@@ -467,8 +469,8 @@ buildTimeSig nn dd cc bb =
 consumeOverspill :: forall a. Parser (Tuple Int a ) -> Int -> Parser a
 consumeOverspill actual expected =
   actual
-    >>= (\(Tuple cnt rest ) ->
-          map (\_ -> rest) $
+    >>= (\(Tuple cnt oversp ) ->
+          map (\_ -> oversp) $
                 skip $
                     count (cnt - expected) int8
         )

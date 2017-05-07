@@ -9,6 +9,8 @@ defines an exact duration for each note by measuring the difference in time betw
 NoteOff. You can alter the phrase length in order to attempt to get a good balance between responsiveness of the widget buttons
 and playing the tune at the appropriate tempo.
 
+This is an experiment from which the [purescript-midi-player](https://github.com/newlandsvalley/purescript-midi-player) has been derived.
+
 Building
 --------
 

@@ -7,7 +7,7 @@ module Data.Midi.WebMidi
   , listen ) where
 
 import Control.Monad.Aff (Aff, makeAff)
-import Control.Monad.Eff (Eff)
+import Control.Monad.Eff (kind Effect, Eff)
 import Prelude (Unit)
 
 -- | A Midi Event
@@ -27,7 +27,7 @@ type Device =
 }
 
 -- | WEBMIDI Effect
-foreign import data WEBMIDI :: !
+foreign import data WEBMIDI :: Effect
 
 foreign import listenImpl :: forall e. (RawMidiEvent -> Eff e Unit) -> Eff e Unit
 

@@ -8,18 +8,18 @@
     "examples"
   ],
   "dependencies": {
-    "purescript-prelude": "^2.5.0",
-    "purescript-console": "^2.0.0",
-    "purescript-lists": "^3.4.0",
-    "purescript-string-parsers": "^2.2.0",
-    "purescript-integers": "^2.1.1",
-    "purescript-debug": "^2.0.0",
-    "purescript-aff": "^2.0.3"
+    "purescript-prelude": "^3.0.0",
+    "purescript-console": "^3.0.0",
+    "purescript-lists": "^4.1.0",
+    "purescript-string-parsers": "^3.0.1",
+    "purescript-integers": "^3.0.0",
+    "purescript-debug": "^3.0.0",
+    "purescript-aff": "^3.0.0"
   },
   "devDependencies": {
-    "purescript-psci-support": "^2.0.0",
-    "purescript-node-fs": "^3.0.0",
-    "purescript-test-unit": "^10.1.0",
-    "purescript-assert": "^2.0.0"
+    "purescript-psci-support": "^3.0.0",
+    "purescript-node-fs": "^4.0.0",
+    "purescript-test-unit": "^11.0.0",
+    "purescript-assert": "^3.0.0"
   }
 }
