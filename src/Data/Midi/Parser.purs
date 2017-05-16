@@ -83,7 +83,6 @@ bchoice :: Int -> Int -> Parser Int
 bchoice x y =
   bchar x <|> bchar y
 
-
 notTrackEnd :: Parser Int
 notTrackEnd =
   let
@@ -97,8 +96,6 @@ int16 :: Parser Int
 int16 =
   let
     toInt16 a b =
-    -- shiftLeft a 8 + b
-    -- shiftLeftBy 8 a + b
       a `shl` 8 + b
   in
     toInt16 <$> int8 <*> int8
@@ -108,8 +105,6 @@ int24 :: Parser Int
 int24 =
   let
     toInt24 a b c =
-      -- shiftLeft a 16 + shiftLeft b 8 + c
-      -- shiftLeftBy 16 a + shiftLeftBy 8 b + c
       a `shl` 16 + b `shl` 8 + c
   in
     toInt24 <$> int8 <*> int8 <*> int8
@@ -118,8 +113,6 @@ int32 :: Parser Int
 int32 =
   let
     toInt32 a b c d =
-      -- shiftLeft a 24 + shiftLeft b 16 + shiftLeft c 8 + d
-      -- shiftLeftBy 24 a + shiftLeftBy 16 b + shiftLeftBy 8 c + d
       a `shl` 24 + b `shl` 16 + c `shl` 8 + d
   in
     toInt32 <$> int8 <*> int8 <*> int8 <*> int8
@@ -133,10 +126,8 @@ varInt =
           if (topBitSet n) then
             ((+) ((clearTopBit >>> shiftLeftSeven) n)) <$> varInt
           else
-            -- succeed n
             pure n
         )
-
 
 {- just for debug purposes - consume the rest of the input -}
 rest :: Parser (List Char)
@@ -147,8 +138,6 @@ rest =
 
 midi :: Parser Recording
 midi =
-  -- midiHeader `andThen` midiTracks
-  -- midiHeader |> andThen midiTracks
   midiHeader >>= midiTracks
 
 {- this version of the top level parser just parses many tracks
@@ -190,7 +179,6 @@ midiTracks h =
 midiTrack :: Parser Track
 midiTrack =
   Track <$>
-     --(string "MTrk" *> int32 *> many1 midiMessage <* trackEndMessage) <?> "midi track"
      (string "MTrk" *> int32 *> many1Till midiMessage trackEndMessage <?> "midi track")
 
 
@@ -249,7 +237,6 @@ sequenceNumber =
 parseMetaString :: Int -> Parser String
 parseMetaString target =
   catChars
-    -- <$> (bchar target *> varInt `andThen` (\l -> count l anyChar))
     <$>
       (bchar target *> varInt >>= (\l -> count l anyChar))
 
@@ -264,7 +251,6 @@ copyright =
 trackName :: Parser Event
 trackName =
   TrackName <$> parseMetaString 0x03 <?> "track name"
-
 
 instrumentName :: Parser Event
 instrumentName =
@@ -319,7 +305,6 @@ sysEx =
 -}
 unspecified :: Parser Event
 unspecified =
-  -- Unspecified <$> notTrackEnd <*> (int8 `andThen` (\l -> count l int8))
   Unspecified <$> notTrackEnd <*> (int8 >>= (\l -> count l int8))
 
 trackEndMessage :: Parser Unit
@@ -389,7 +374,6 @@ buildNote :: Int -> Int -> Int -> Event
 buildNote cmd note velocity =
   let
     channel =
-      -- cmd `and` 0x0F
       and cmd 0x0F
 
     isOff =
@@ -407,7 +391,6 @@ channelBuilder3 :: (Int -> Int -> Int -> Event) -> Int -> Int -> Int -> Event
 channelBuilder3 construct cmd x y =
   let
     channel =
-      -- cmd `and` 0x0F
       and cmd 0x0F
   in
     construct channel x y
@@ -416,7 +399,6 @@ channelBuilder2 :: (Int -> Int -> Event) -> Int -> Int -> Event
 channelBuilder2 construct cmd x =
   let
     channel =
-      -- cmd `and` 0x0F
       and cmd 0x0F
   in
     construct channel x
@@ -477,17 +459,14 @@ consumeOverspill actual expected =
 
 topBitSet :: Int -> Boolean
 topBitSet n =
-  -- n `and` 0x80 > 0
   and n 0x80 > 0
 
 clearTopBit :: Int -> Int
 clearTopBit n =
-  -- n `and` 0x7F
   and n 0x7F
 
 shiftLeftSeven :: Int -> Int
 shiftLeftSeven n =
-    -- shiftLeft n 7
     n `shl` 7
 
 makeTuple :: forall a b. a -> b -> Tuple a b
@@ -501,11 +480,8 @@ catChars = fold <<< map singleton
 translateNextEvent :: Tuple Event Track -> Message -> Tuple  Event Track
 translateNextEvent acc nextMessage =
   let
-    -- ( state, events ) =  acc
     state = fst acc
     events = unwrap $ snd acc
-
-        -- ( ticks, next ) =  nextMessage
   in
     case nextMessage of
       Message ticks (RunningStatus x y) ->
@@ -558,12 +534,6 @@ interpretRS last x y =
     _ ->
       Unspecified 0 Nil
 
-{-}
-translateAllRunningStatus :: Track -> Track
-translateAllRunningStatus =
-  wrap <<< reverse <<< unwrap <<< snd <<<
-    foldl translateNextEvent ( Tuple (Unspecified 0 Nil) (Track Nil) )
-    -}
 
 translateAllRunningStatus :: Track -> Track
 translateAllRunningStatus wrappedTrack =
@@ -580,67 +550,40 @@ translateAllRunningStatus wrappedTrack =
 -- | Parse a MIDI event
 parseMidiEvent :: String -> Either String Event
 parseMidiEvent s =
-    case runParser midiEvent s of
-        Right n ->
-            Right n
+  case runParser midiEvent s of
+    Right n ->
+      Right n
 
-        Left e ->
-            Left $ show e
-
-{-}
-    case parse midiEvent s of
-        Ok ( _, _, n ) ->
-            Ok n
-
-        Err ( _, ctx, ms ) ->
-            Err ("parse error: " ++ (toString ms) ++ ", " ++ (toString ctx))
--}
-
+    Left e ->
+      Left $ show e
 
 -- | entry point - Parse a normalised MIDI file image
 parse :: String -> Either String Recording
 parse s =
+  case runParser midi s of
+    Right n ->
+      Right n
 
-    case runParser midi s of
-        Right n ->
-            Right n
-
-        Left e ->
-            Left $ show e
-{-}
-    case Combine.parse midi s of
-        -- case Combine.parse (midi <* end) s of
-        -- ( Ok n, _ ) ->
-        Ok ( _, _, n ) ->
-            Ok n
-
-        -- ( Err ms, cx ) ->
-        --    Err ("parse error: " ++ (toString ms) ++ ", " ++ (toString cx))
-        Err ( _, ctx, ms ) ->
-            Err ("parse error: " ++ (toString ms) ++ ", " ++ (toString ctx))
--}
-
+    Left e ->
+      Left $ show e
 
 -- | normalise the input before we parse by masking off all but the least significant 8 bits
 normalise :: String -> String
 normalise =
-    let
-        f =
-            toCharCode >>> ((and) 0xFF) >>> fromCharCode
-    in
-        toCharArray >>> map f >>> fromCharArray
+  let
+    f = toCharCode >>> ((and) 0xFF) >>> fromCharCode
+  in
+    toCharArray >>> map f >>> fromCharArray
 
 -- | translate the Running Status messages in each track to the expanded form (NoteOn/NoteOff etc)
 translateRunningStatus :: Either String Recording -> Either String Recording
 translateRunningStatus res =
-    case res of
-        Right mr ->
-            let
-                tracks =
-                    -- second mr |> List.
-                    map translateAllRunningStatus (unwrap mr).tracks
-            in
-                Right (Recording { header : (unwrap mr).header, tracks : tracks })
+  case res of
+    Right mr ->
+      let
+        tracks = map translateAllRunningStatus (unwrap mr).tracks
+      in
+        Right (Recording { header : (unwrap mr).header, tracks : tracks })
 
-        err ->
-            err
+    err ->
+      err
