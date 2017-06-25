@@ -13,7 +13,6 @@ import Data.Foldable (fold)
 import Data.Unfoldable (replicateA)
 import Data.Either (Either(..))
 import Data.Tuple (Tuple(..), fst, snd)
-import Data.Newtype (unwrap, wrap)
 import Data.Char (fromCharCode, toCharCode)
 import Data.String (singleton, fromCharArray, toCharArray)
 import Data.Int (pow)
@@ -170,8 +169,8 @@ midiHeader =
 
 
 midiTracks :: Header -> Parser Recording
-midiTracks h =
-  buildRecording h <$> count (unwrap h).trackCount midiTrack <?> "midi tracks"
+midiTracks (Header h) =
+  buildRecording (Header h) <$> count h.trackCount midiTrack <?> "midi tracks"
 
 {- we don't place TrackEnd events into the parse tree - there is no need.
    The end of the track is implied by the end of the event list
@@ -477,11 +476,11 @@ makeTuple a b =
 catChars :: List Char -> String
 catChars = fold <<< map singleton
 
-translateNextEvent :: Tuple Event Track -> Message -> Tuple  Event Track
-translateNextEvent acc nextMessage =
+translateNextMessage :: Tuple Event Track -> Message -> Tuple  Event Track
+translateNextMessage acc nextMessage =
   let
     state = fst acc
-    events = unwrap $ snd acc
+    Track messages = snd acc
   in
     case nextMessage of
       Message ticks (RunningStatus x y) ->
@@ -492,14 +491,14 @@ translateNextEvent acc nextMessage =
           case translatedStatus of
             Unspecified _ _ ->
               -- couldn't translate the running status so drop it
-              Tuple state (wrap events)
+              Tuple state (Track messages)
 
             _ ->
               -- could translate the running status so adopt it
-              Tuple state ( Track ((Message ticks translatedStatus) : events) )
+              Tuple state ( Track ((Message ticks translatedStatus) : messages) )
 
       Message _ other ->
-        Tuple other (Track (nextMessage : events))
+        Tuple other (Track (nextMessage : messages))
 
 
 -- just update the state
@@ -534,14 +533,17 @@ interpretRS last x y =
     _ ->
       Unspecified 0 Nil
 
+unwrapTrack :: Track -> List Message
+unwrapTrack (Track t) = t
+
 
 translateAllRunningStatus :: Track -> Track
 translateAllRunningStatus wrappedTrack =
   let
-    track = unwrap wrappedTrack
+    Track track = wrappedTrack
     translate =
-      (wrap <<< reverse <<< unwrap <<< snd <<<
-        foldl translateNextEvent ( Tuple (Unspecified 0 Nil) (Track Nil) ))
+      (Track <<< reverse <<< unwrapTrack <<< snd <<<
+        foldl translateNextMessage ( Tuple (Unspecified 0 Nil) (Track Nil) ))
   in
     translate track
 
@@ -579,11 +581,11 @@ normalise =
 translateRunningStatus :: Either String Recording -> Either String Recording
 translateRunningStatus res =
   case res of
-    Right mr ->
+    Right (Recording mr) ->
       let
-        tracks = map translateAllRunningStatus (unwrap mr).tracks
+        tracks = map translateAllRunningStatus mr.tracks
       in
-        Right (Recording { header : (unwrap mr).header, tracks : tracks })
+        Right (Recording { header : mr.header, tracks : tracks })
 
     err ->
       err

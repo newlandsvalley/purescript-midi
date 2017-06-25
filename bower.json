@@ -14,7 +14,8 @@
     "purescript-string-parsers": "^3.0.1",
     "purescript-integers": "^3.0.0",
     "purescript-debug": "^3.0.0",
-    "purescript-aff": "^3.0.0"
+    "purescript-aff": "^3.0.0",
+    "purescript-generics-rep": "^5.1.0"
   },
   "devDependencies": {
     "purescript-psci-support": "^3.0.0",

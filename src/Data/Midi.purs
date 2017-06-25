@@ -9,8 +9,10 @@ module Data.Midi
 
 import Prelude (class Show, class Eq, class Ord)
 import Data.List (List)
-import Data.Newtype (class Newtype)
-import Data.Generic (gShow, gEq, class Generic)
+import Data.Generic.Rep
+import Data.Generic.Rep.Eq
+import Data.Generic.Rep.Ord
+import Data.Generic.Rep.Show
 
 type Ticks =
     Int
@@ -44,56 +46,72 @@ data Event
     | PitchBend Int Int
     | RunningStatus Int Int
 
-derive instance genericEvent :: Generic Event
+derive instance genericEvent :: Generic Event _
 instance showEvent :: Show Event where
-  show = gShow
+  show = genericShow
 instance eqEvent :: Eq Event where
-  eq = gEq
+  eq = genericEq
+instance ordEvent :: Ord Event where
+  compare = genericCompare
 
 -- | Midi Message
 data Message = Message Ticks Event
 
-derive instance genericMessage :: Generic Message
+derive instance genericMessage :: Generic Message _
 instance showMessage :: Show Message where
-  show = gShow
+  show = genericShow
 instance eqMessage :: Eq Message where
-  eq = gEq
+  eq = genericEq
+instance ordMessage :: Ord Message where
+  compare = genericCompare
 
 -- | Midi Track
-newtype Track = Track
+data Track = Track
   (List Message)
 
-derive instance newtypeTrack :: Newtype Track _
-derive instance genericTrack :: Generic Track
+derive instance genericTrack :: Generic Track _
+
 instance showTrack :: Show Track where
-  show = gShow
+  show = genericShow
+
 instance eqTrack :: Eq Track where
-  eq = gEq
+  eq = genericEq
+
+instance ordTrack :: Ord Track where
+  compare = genericCompare
+
 
 -- | Midi Header
-newtype Header = Header
+data Header = Header
     { formatType :: Int
     , trackCount :: Int
     , ticksPerBeat :: Int
     }
 
-derive instance newtypeHeader :: Newtype Header _
-derive instance eqHeader :: Eq Header
-derive instance ordHeader:: Ord Header
+derive instance genericHeader :: Generic Header _
 
-derive instance genericHeader :: Generic Header
 instance showHeader :: Show Header where
-  show = gShow
+  show = genericShow
+
+instance eqHeader :: Eq Header where
+  eq = genericEq
+
+instance ordHeader :: Ord Header where
+  compare = genericCompare
 
 -- | Midi Recording
-newtype Recording = Recording
+data Recording = Recording
     { header :: Header
     , tracks :: List Track
     }
 
-derive instance newtypeRecording :: Newtype Recording _
-derive instance genericRecording :: Generic Recording
+derive instance genericRecording :: Generic Recording _
+
 instance showRecording :: Show Recording where
-  show = gShow
+  show = genericShow
+
 instance eqRecording :: Eq Recording where
-  eq = gEq
+  eq = genericEq
+
+instance ordRecording:: Ord Recording where
+  compare = genericCompare
