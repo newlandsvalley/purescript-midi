@@ -10,9 +10,9 @@ module Data.Midi
 import Prelude (class Show, class Eq, class Ord)
 import Data.List (List)
 import Data.Generic.Rep
-import Data.Generic.Rep.Eq
-import Data.Generic.Rep.Ord
-import Data.Generic.Rep.Show
+import Data.Generic.Rep.Eq (genericEq)
+import Data.Generic.Rep.Ord (genericCompare)
+import Data.Generic.Rep.Show (genericShow)
 
 type Ticks =
     Int

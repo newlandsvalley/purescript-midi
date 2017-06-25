@@ -21,7 +21,6 @@ import Data.Int (toNumber)
 import Data.Time.Duration (Milliseconds(..))
 import Data.List (List(..), head, index, length)
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Newtype (unwrap)
 import Data.Midi.Parser (parse, normalise, translateRunningStatus)
 import Partial.Unsafe (unsafePartial)
 import Prelude (bind, const, discard, negate, not, show, pure, ($), (<>), (>), (<<<), (||), (+), (*), (/))
@@ -130,12 +129,11 @@ processFile filespec state =
 maxMidiEvents :: Either String Midi.Recording -> Int
 maxMidiEvents mr =
   case mr of
-    Right recording ->
+    Right (Midi.Recording recording) ->
       let
-        track0 = fromMaybe (Midi.Track Nil) (head (unwrap recording).tracks)
-        trackLength (Midi.Track track) = length track
+        Midi.Track track0 = fromMaybe (Midi.Track Nil) (head recording.tracks)
       in
-        trackLength track0
+        length track0
     _ -> 0
 
 -- | step through the MIDI events, one by one
