@@ -17,7 +17,8 @@ type Melody = Array MidiPhrase
 -- | a PartialNote comes from MIDI NoteOn
 -- | and is incomplete because it has no end time offset/duration
 type PartialNote =
-  { pitch :: Int
+  { channel :: Int
+  , pitch :: Int
   , gain :: Number
   , timeOffset :: Number
   }
@@ -148,7 +149,7 @@ accumulateTempo ticks tempo =
 addNoteOn :: Int -> Int -> Int -> Number -> TState -> TState
 addNoteOn channel pitch velocity offset tstate =
   let
-    partialNote = buildPartialNote pitch velocity offset
+    partialNote = buildPartialNote channel pitch velocity offset
     key = noteKey channel pitch
     currentNoteMap = Map.insert key partialNote tstate.currentNoteMap
     noteOffset = partialNote.timeOffset
@@ -171,7 +172,8 @@ finaliseNote channel pitch velocity endOffset tstate =
       Just pnote ->
         let
           finalisedNote =
-            { id : pnote.pitch
+            { channel : pnote.channel
+            , id : pnote.pitch
             , timeOffset : pnote.timeOffset - tstate.phraseOffset
             , duration : endOffset - pnote.timeOffset
             , gain : pnote.gain
@@ -220,11 +222,11 @@ retrieveMelody =
       melody = reverse $ (reverse tstate.currentPhrase) : tstate.melody
     pure melody
 
-buildPartialNote :: Int -> Int -> Number -> PartialNote
-buildPartialNote pitch velocity timeOffset =
+buildPartialNote :: Int -> Int -> Int -> Number -> PartialNote
+buildPartialNote channel pitch velocity timeOffset =
   let
     maxVolume = 127
     gain =
       toNumber velocity / toNumber maxVolume
   in
-    { pitch : pitch, gain : gain, timeOffset : timeOffset }
+    { channel : channel, pitch : pitch, gain : gain, timeOffset : timeOffset }

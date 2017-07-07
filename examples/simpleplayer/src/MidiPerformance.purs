@@ -63,12 +63,12 @@ transformMessage m =
     Midi.Message ticks (Midi.Tempo tempo) ->
       accumulateTempo ticks tempo
     Midi.Message ticks (Midi.NoteOn channel pitch velocity) ->
-      accumulateNoteOn ticks pitch velocity
+      accumulateNoteOn channel ticks pitch velocity
     Midi.Message ticks _ ->
       accumulateTicks ticks
 
-accumulateNoteOn :: Int -> Int -> Int -> ControlState.State TransformationState (Array MidiNote)
-accumulateNoteOn ticks pitch velocity =
+accumulateNoteOn :: Int -> Int -> Int -> Int -> ControlState.State TransformationState (Array MidiNote)
+accumulateNoteOn channel ticks pitch velocity =
   do
     tpl <- ControlState.get
     let
@@ -79,7 +79,7 @@ accumulateNoteOn ticks pitch velocity =
         if (pitch == 0) then
           tstate.notes
         else
-          (buildNote pitch velocity (tstate.noteOffset + offsetDelta)) : tstate.notes
+          (buildNote channel pitch velocity (tstate.noteOffset + offsetDelta)) : tstate.notes
       tstate' = tstate { noteOffset = tstate.noteOffset + offsetDelta
                        , notes = notes
                        }
@@ -128,11 +128,11 @@ retrieveMelody =
       recording = reverse tstate.notes
     pure recording
 
-buildNote :: Int -> Int -> Number -> MidiNote
-buildNote pitch velocity noteOffset =
+buildNote :: Int -> Int -> Int -> Number -> MidiNote
+buildNote channel pitch velocity noteOffset =
   let
     maxVolume = 127
     gain =
       toNumber velocity / toNumber maxVolume
   in
-    { id: pitch, timeOffset: noteOffset, duration : 1.0, gain : gain }
+    { channel: channel, id: pitch, timeOffset: noteOffset, duration : 1.0, gain : gain }

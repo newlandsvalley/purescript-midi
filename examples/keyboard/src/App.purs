@@ -159,7 +159,7 @@ playMidiEvent msg state =
                   gain =
                     toNumber velocity * volumeScale / toNumber volumeCeiling
                   midiNote :: MidiNote
-                  midiNote = { id: pitch, timeOffset: 0.0, duration : 1.0, gain : gain }
+                  midiNote = { channel : channel, id: pitch, timeOffset: 0.0, duration : 1.0, gain : gain }
                 _ <- liftEff $ playNote midiNote
                 pure $ Just NoOp
             ]

@@ -186,7 +186,7 @@ playEvent event =
           maxVolume = 127
           gain =
             toNumber velocity / toNumber maxVolume
-          midiNote = { id: pitch, timeOffset: 0.0, duration : 1.0, gain : gain }
+          midiNote = { channel : channel, id: pitch, timeOffset: 0.0, duration : 1.0, gain : gain }
         in
           playNote midiNote
       else
