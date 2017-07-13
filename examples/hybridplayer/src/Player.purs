@@ -1,7 +1,7 @@
 module Player where
 
 import CSS.TextAlign
-import Audio.SoundFont (AUDIO, MidiNote, loadRemoteSoundFont, playNotes)
+import Audio.SoundFont (AUDIO, LoadResult, MidiNote, loadRemoteSoundFont, playNotes)
 import BinaryFileIO.FileIO (FILEIO, Filespec, loadBinaryFile)
 import CSS (color, fromString)
 import CSS.Background (background, backgroundImages)
@@ -22,7 +22,7 @@ import Data.Maybe (Maybe(..))
 import Data.Time.Duration (Milliseconds(..))
 import Data.Midi.Parser (parse, normalise, translateRunningStatus)
 import HybridPerformance (Melody, MidiPhrase, toPerformance)
-import Prelude (bind, const, discard, negate, not, show, pure, ($), (<>), (<<<), (||), (+), (*))
+import Prelude (bind, const, discard, negate, not, show, pure, ($), (<>), (<<<), (||), (>=), (+), (*))
 import Pux (EffModel, noEffects)
 import Pux.DOM.Events (onClick, onChange)
 import Pux.DOM.HTML (HTML)
@@ -36,7 +36,7 @@ import Text.Smolder.Markup (Attribute, text, (#!), (!))
 data Event
   = NoOp
   | RequestLoadFonts
-  | FontLoaded Boolean
+  | FontLoaded LoadResult
   | RequestFileUpload
   | FileLoaded Filespec
   | StepMidi  Number     -- not called directly but its presence allows a view update
@@ -53,7 +53,7 @@ type PlayerState =
 type State =
   { filespec :: Maybe Filespec
   , melody :: Melody
-  , fontLoaded :: Boolean                 -- is the soundfount loaded?
+  , fontLoad :: LoadResult             -- is the soundfount loaded?
   , playerState :: PlayerState
   }
 
@@ -69,7 +69,7 @@ initialState :: State
 initialState =
   { filespec : Nothing
   , melody : []
-  , fontLoaded : false
+  , fontLoad : { instrument :"unknown", channel : (-1)}
   , playerState : initialPlayerState 0
   }
 
@@ -80,12 +80,12 @@ foldp RequestLoadFonts state =
  { state: state
    , effects:
      [ do
-         loaded <- loadRemoteSoundFont "acoustic_grand_piano"
-         pure $ Just (FontLoaded loaded)
+         loadResult <- loadRemoteSoundFont "acoustic_grand_piano"
+         pure $ Just (FontLoaded loadResult)
      ]
   }
-foldp (FontLoaded loaded) state =
-  noEffects $ state { fontLoaded = loaded }
+foldp (FontLoaded loadResult) state =
+  noEffects $ state { fontLoad = loadResult }
 foldp RequestFileUpload state =
  { state: state
    , effects:
@@ -202,9 +202,14 @@ debugMelody state =
       _ -> p $ text ""
 -}
 
+-- | not ideal.  At the moment we don't catch errors from fonts that don't load
+isFontLoaded :: State -> Boolean
+isFontLoaded state =
+  state.fontLoad.channel >= 0
+
 view :: State -> HTML Event
 view state =
-  if (state.fontLoaded) then
+  if (isFontLoaded state) then
      div  do
        h1 ! centreStyle $ text "Hybrid MIDI file player"
        div do

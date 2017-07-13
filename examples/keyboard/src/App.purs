@@ -1,6 +1,6 @@
 module App where
 
-import Audio.SoundFont (AUDIO, MidiNote, loadRemoteSoundFont, playNote)
+import Audio.SoundFont (AUDIO, LoadResult, MidiNote, loadRemoteSoundFont, playNote)
 import Control.Monad.Aff (Aff)
 import Control.Monad.Eff.Class (liftEff)
 import Data.Array ((:), filter, null)
@@ -14,7 +14,7 @@ import Data.Midi.Parser (parseMidiEvent)
 import Data.Midi.WebMidi (WEBMIDI, Device, RawMidiEvent, detectInputDevices, listen, webMidiConnect)
 import Data.Tuple (Tuple(..))
 import Data.Foldable (traverse_)
-import Prelude (class Eq, bind, const, discard, not, pure, ($), (<>), (==), (/=), (/), (*), (&&))
+import Prelude (class Eq, bind, const, discard, negate, not, pure, ($), (<>), (==), (/=), (>=), (/), (*), (&&))
 import Pux (EffModel, noEffects)
 import Pux.DOM.Events (onClick, onChange, targetValue)
 import Pux.DOM.HTML (HTML)
@@ -33,7 +33,7 @@ data Event
     | WebMidiSupported Boolean    -- Is it supported ?
     | DeviceMessage Device        -- a device connection/disconnection message
     | MidiMessage RawMidiEvent    -- a MIDI event message
-    | FontLoaded Boolean          -- set when a requested font loads
+    | FontLoaded LoadResult       -- set when a requested font loads
     | ChangeInstrument String     -- change the MIDI isntrument
 
 data ConnectionState =
@@ -48,8 +48,8 @@ instance eqConnectionState :: Eq ConnectionState where
 type State =
   { webMidiConnection :: ConnectionState  -- the state of the WebMidi Connection
   , inputDevices :: Array Device          -- currently attached input devices
-  , instrument :: String                  -- the name of the instrument to use
-  , fontLoaded :: Boolean                 -- is it loaded?
+  , instrument :: String                  -- the informal name of the instrument to use
+  , fontLoad :: LoadResult                -- the instrument and its load status
   , maxVolume :: Int                      -- the maximum volume allowed by the volume control
   }
 
@@ -62,7 +62,7 @@ initialState = {
     webMidiConnection : Unconnected
   , inputDevices : []
   , instrument : "grand piano"
-  , fontLoaded : false
+  , fontLoad :  { instrument : "acoustic_grand_piano", channel : (-1) }
   , maxVolume : (volumeCeiling / 2)  -- start at half volume ceiling
   }
 
@@ -99,14 +99,14 @@ foldp (WebMidiSupported supported) state =
         []
   in
     {state: newState, effects: effects}
-foldp (FontLoaded loaded) state =
-   noEffects (state { fontLoaded = loaded })
+foldp (FontLoaded loadResult) state =
+   noEffects (state { fontLoad = loadResult })
 foldp (DeviceMessage device) state =
    noEffects $ saveDeviceMessage device state
 foldp (MidiMessage msg) state =
   playMidiEvent msg state
 foldp (ChangeInstrument instrument) state =
-  { state: state { instrument = instrument, fontLoaded = false }
+  { state: state { instrument = instrument, fontLoad = { instrument : "nothing yet", channel : (-1) } }
   , effects: [loadFont instrument]
   }
 
@@ -128,8 +128,13 @@ loadFont instrument =
     let
       fontName =
         fromMaybe "acoustic_grand_piano" $ lookup instrument instrumentsMap
-    loaded <- loadRemoteSoundFont fontName
-    pure $ Just (FontLoaded loaded)
+    loadResult <- loadRemoteSoundFont fontName
+    pure $ Just (FontLoaded loadResult)
+
+-- | not ideal.  At the moment we don't catch errors from fonts that don't load
+isFontLoaded :: State -> Boolean
+isFontLoaded state =
+  state.fontLoad.channel >= 0
 
 -- | interpret MIDI event messages
 -- | at the moment we only respond to:
@@ -142,7 +147,7 @@ loadFont instrument =
 -- | (i.e. you're probably OK if you just attach a single device)
 playMidiEvent :: RawMidiEvent -> State -> EffModel State Event (au :: AUDIO, wm :: WEBMIDI)
 playMidiEvent msg state =
-  if (state.fontLoaded) then
+  if (isFontLoaded state) then
     let
       midiEvent = (parseMidiEvent msg.encodedBinary)
     in
@@ -242,9 +247,9 @@ viewConnectionState state =
 -- | display the status of the soundfont load
 viewFontLoadState :: State -> HTML Event
 viewFontLoadState state =
-  if state.fontLoaded then
+  if (isFontLoaded state) then
     do
-      p $ text $ (state.instrument <> " font loaded ")
+      p $ text $ (state.fontLoad.instrument <> " font loaded ")
   else
     do
       p $ text ""
@@ -256,7 +261,7 @@ instrumentMenu state =
     div do
       text "select an instrument"
       select ! selectionStyle #! onChange (\e -> ChangeInstrument (targetValue e) )
-        $ (instrumentOptions state.instrument)
+        $ (instrumentOptions state.fontLoad.instrument)
     else
       do
         p $ text ""
