@@ -28,8 +28,8 @@ import Pux.DOM.Events (onClick, onChange)
 import Pux.DOM.HTML (HTML)
 import Pux.DOM.HTML.Attributes (style)
 import Text.Smolder.HTML (button, div, h1, p, input, progress)
-import Text.Smolder.HTML.Attributes (type', id, accept, max, src, value)
-import Text.Smolder.Markup (Attribute, text, (#!), (!))
+import Text.Smolder.HTML.Attributes (type', disabled, id, accept, max, src, value)
+import Text.Smolder.Markup (Attribute, text, (#!), (!), (!?))
 
 -- import Debug.Trace (trace)
 
@@ -41,6 +41,7 @@ data Event
   | FileLoaded Filespec
   | StepMidi  Number     -- not called directly but its presence allows a view update
   | PlayMidi Boolean     -- play | pause
+  | EnablePlayButton     -- re-enable the pause/play button
   | StopMidi
 
 type PlayerState =
@@ -48,6 +49,7 @@ type PlayerState =
   , phraseMax :: Int
   , phraseIndex :: Int
   , lastPhraseLength :: Number
+  , playButtonDisabled :: Boolean
   }
 
 type State =
@@ -63,6 +65,7 @@ initialPlayerState max =
   , phraseMax : max
   , phraseIndex : 0
   , lastPhraseLength : 0.0
+  , playButtonDisabled : false
   }
 
 initialState :: State
@@ -98,16 +101,31 @@ foldp (FileLoaded filespec) state =
   noEffects $ processFile filespec state
 foldp (StepMidi delay) state =  step state delay
 foldp (PlayMidi playing) state =
-  let
-    newPlayerState = state.playerState { playing = playing }
-    newState = state { playerState = newPlayerState }
-  in
-    step newState 0.0
+  if (playing) then
+    -- start/restart
+    let
+      newPlayerState = state.playerState { playing = true }
+      newState = state { playerState = newPlayerState }
+    in
+      step newState 0.0
+  else
+    -- pause
+    let
+      newPlayerState = state.playerState { playing = false, playButtonDisabled = true }
+      newState = state { playerState = newPlayerState }
+    in
+      temporarilyFreezePlayButton newState
 foldp (StopMidi) state =
   let
     playerState =
       state.playerState { phraseIndex = 0
                         , playing = false }
+  in
+    noEffects $ state { playerState = playerState }
+foldp EnablePlayButton state =
+  let
+    playerState =
+      state.playerState { playButtonDisabled = false }
   in
     noEffects $ state { playerState = playerState }
 
@@ -144,7 +162,7 @@ step state sDelay =
           [ do
               _ <- delay (Milliseconds msDelay)
               nextDelay <- liftEff (playEvent midiPhrase)
-              {-}
+              {-}:: forall e. State -> Number -> EffModel State Event (au :: AUDIO | e)
               nextDelay <-
                   later' msDelay $ liftEff (playEvent midiPhrase)
               -}
@@ -153,6 +171,21 @@ step state sDelay =
         }
     _ ->
       noEffects state
+
+-- | the pause button is unresponsive.  The playback only pauses when the current
+-- | phrase finishes playing. So temporarily freeze the play button.
+temporarilyFreezePlayButton :: forall e. State -> EffModel State Event (au :: AUDIO | e)
+temporarilyFreezePlayButton state =
+  let
+    msDelay = state.playerState.lastPhraseLength * 1000.0
+  in
+    { state: state
+    , effects:
+      [ do
+          _ <- delay (Milliseconds msDelay)
+          pure $ Just EnablePlayButton
+      ]
+    }
 
 -- | play a MIDI Phrase (a bunch of MIDI notes)
 -- | only NoteOn events produce sound
@@ -225,6 +258,8 @@ player :: State -> HTML Event
 player state =
   let
     sliderPos = show state.playerState.phraseIndex
+    -- the play button is temporarily disabled after a pause command
+    isDisabled = state.playerState.playButtonDisabled
 
     startImg = "assets/images/play.png"
     stopImg =  "assets/images/stop.png"
@@ -251,7 +286,8 @@ player state =
             progress ! capsuleStyle ! max capsuleMax ! value sliderPos $ do
               text ""
             div ! buttonStyle $ do
-              input ! type' "image" ! src playButtonImg
+              -- input ! type' "image" ! src playButtonImg
+              (input !? isDisabled) (disabled "disabled") ! type' "image" ! src playButtonImg
                  #! onClick (const playAction)
               input ! type' "image" ! src stopImg
                  #! onClick (const StopMidi)
