@@ -1,7 +1,7 @@
 purescript-midi
 ===============
 
-This library provides MIDI support in PureScript.  It provides a MIDI parser and also support for the Web MIDI API (currently only available in Chrome and, I think, Opera). For example, if you use Chrome and can plug in a MIDI keyboard you should to be able to play using [this](http://www.tradtunedb.org.uk:8600/).
+This library provides MIDI support in PureScript.  It provides a MIDI parser and also support for the Web MIDI API (currently only available in Chrome and, I think, Opera). For example, if you use Chrome and can plug in a MIDI keyboard you should to be able to play using [this](http://www.tradtunedb.org.uk:8601/).
 
 ## Building
 
