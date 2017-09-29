@@ -2,6 +2,7 @@
   "name": "keyboard",
   "private": true,
   "dependencies": {
+    "purescript-unicode": "^3.0.1",
     "purescript-midi": "../../../purescript-midi",
     "purescript-soundfonts": "https://github.com/newlandsvalley/purescript-polyphonic-soundfonts.git",
     "purescript-pux": "^9.1.0"

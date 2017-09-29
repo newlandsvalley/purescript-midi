@@ -6,13 +6,11 @@ import Control.Monad.Eff.Class (liftEff)
 import Data.Array ((:), filter, null)
 import Data.Either (Either(..))
 import Data.Generic (gEq, class Generic)
-import Data.Map (Map, fromFoldable, lookup)
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe(..))
 import Data.Int (toNumber)
 import Data.Midi as Midi
 import Data.Midi.Parser (parseMidiEvent)
 import Data.Midi.WebMidi (WEBMIDI, Device, RawMidiEvent, detectInputDevices, listen, webMidiConnect)
-import Data.Tuple (Tuple(..))
 import Data.Foldable (traverse_)
 import Prelude (class Eq, bind, const, discard, negate, not, pure, ($), (<>), (==), (/=), (>=), (/), (*), (&&))
 import Pux (EffModel, noEffects)
@@ -26,6 +24,7 @@ import CSS.Geometry (margin)
 import CSS.TextAlign (center, textAlign)
 import CSS.Size (px, em)
 import CSS.Font (fontSize)
+import Instrument (instruments)
 
 data Event
     = NoOp
@@ -75,7 +74,7 @@ foldp RequestWebMidi state =
          -- see if WebMidi is supported
          connected <- liftEff $ webMidiConnect
          pure $ Just (WebMidiSupported connected)
-     , loadFont "grand piano"
+     , loadFont "acoustic_grand_piano"
      ]
   }
 foldp (WebMidiSupported supported) state =
@@ -124,11 +123,7 @@ saveDeviceMessage device state =
 loadFont :: forall e. String -> Aff e (Maybe Event)
 loadFont instrument =
   do
-    -- try to load the soundfont
-    let
-      fontName =
-        fromMaybe "acoustic_grand_piano" $ lookup instrument instrumentsMap
-    loadResult <- loadRemoteSoundFont fontName
+    loadResult <- loadRemoteSoundFont instrument
     pure $ Just (FontLoaded loadResult)
 
 -- | not ideal.  At the moment we don't catch errors from fonts that don't load
@@ -188,26 +183,6 @@ recogniseControlMessage event state =
     _ ->
       state
 
-
--- | mapping of instruments to gleitzman font names
-instruments :: Array (Tuple String String)
-instruments =
-    [ Tuple "grand piano" "acoustic_grand_piano"
-    , Tuple "acoustic guitar" "acoustic_guitar_nylon"
-    , Tuple "bassoon" "bassoon"
-    , Tuple "cello" "cello"
-    , Tuple "harp" "orchestral_harp"
-    , Tuple "harpsichord" "harpsichord"
-    , Tuple "marimba" "marimba"
-    , Tuple "oboe" "oboe"
-    , Tuple "sitar" "sitar"
-    , Tuple "vibraphone" "vibraphone"
-    , Tuple "xylophone" "xylophone"
-    ]
-
-instrumentsMap :: Map String String
-instrumentsMap =
-  fromFoldable instruments
 
 showDevice :: Device -> HTML Event
 showDevice device =
@@ -270,7 +245,7 @@ instrumentMenu state =
 instrumentOptions :: String -> HTML Event
 instrumentOptions target =
   let
-    f (Tuple instrument gleitzName) =
+    f instrument =
         -- option [ selectedInstrument name instrument ]
         if (target == instrument) then
           option ! selected "selected" $ text instrument
