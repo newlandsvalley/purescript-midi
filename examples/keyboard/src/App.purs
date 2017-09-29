@@ -197,7 +197,7 @@ viewDevices state =
       case state.inputDevices of
         [] ->
           do
-            p $ text $ "no MIDI device connected"
+            p $ text $ "You need to connect a MIDI device"
         _ ->
           do
             traverse_ showDevice state.inputDevices
