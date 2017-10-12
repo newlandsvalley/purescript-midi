@@ -9,17 +9,17 @@
   ],
   "dependencies": {
     "purescript-prelude": "^3.0.0",
-    "purescript-console": "^3.0.0",
     "purescript-lists": "^4.1.0",
     "purescript-string-parsers": "^3.0.1",
     "purescript-integers": "^3.0.0",
     "purescript-debug": "^3.0.0",
     "purescript-aff": "^3.0.0",
+    "purescript-unicode": "^3.0.1",
     "purescript-generics-rep": "^5.1.0"
   },
   "devDependencies": {
     "purescript-psci-support": "^3.0.0",
-    "purescript-node-fs": "^4.0.0",
+    "purescript-node-fs-aff": "^4.0.0",
     "purescript-test-unit": "^11.0.0",
     "purescript-assert": "^3.0.0"
   }
