@@ -28,9 +28,13 @@ On the other hand, you may merely need to parse MIDI events (such as note on or 
 
 This version is intended to be a fully conformant parser which is happy with Type-0, Type-1 and Type-2 files.
 
-## Web MIDI Support
+## Web MIDI
 
 Data.Midi.WebMidi provides support for [web MIDI](https://www.w3.org/TR/webmidi/).  If you have a browser that supports this API, you can connect a MIDI input device and listen to MIDI messages that are produced (for example) whenever a key is pressed.
+
+## Midi Instrument
+
+Data.Midi.Instrument is an enumerated type listing the various musical instruments supported by general MIDI. It includes a two-way translation between it and the instrument names used in Benjamin Gleitzman's [SoundFont](http://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/names.json) library.
 
 ## Examples
 
