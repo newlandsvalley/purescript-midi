@@ -9,6 +9,7 @@ import Data.Generic (gEq, class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Int (toNumber)
 import Data.Midi as Midi
+import Data.Midi.Instrument (instruments)
 import Data.Midi.Parser (parseMidiEvent)
 import Data.Midi.WebMidi (WEBMIDI, Device, RawMidiEvent, detectInputDevices, listen, webMidiConnect)
 import Data.Foldable (traverse_)
@@ -24,7 +25,6 @@ import CSS.Geometry (margin)
 import CSS.TextAlign (center, textAlign)
 import CSS.Size (px, em)
 import CSS.Font (fontSize)
-import Instrument (instruments)
 
 data Event
     = NoOp
