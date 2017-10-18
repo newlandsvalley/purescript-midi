@@ -1,6 +1,8 @@
 ABC file example
 ================
 
+purescript-midi version 1.0.0
+
 This example shows how you might load an ABC file and then convert it to a MIDI recording.
 
 Building

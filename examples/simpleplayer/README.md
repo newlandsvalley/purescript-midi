@@ -1,6 +1,8 @@
 Simple MIDI player example
 ==========================
 
+purescript-midi version 1.0.0
+
 This example shows how you might load and then play a MIDI file as a single
 uninterrupted Web-Audio melody. Each MIDI NoteOn event produces a MidiNote
 (an instruction to Web-Audio to play through the current SoundFont). This

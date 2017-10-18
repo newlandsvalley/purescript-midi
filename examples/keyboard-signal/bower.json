@@ -1,0 +1,9 @@
+{
+  "name": "keyboard-signal",
+  "private": true,
+  "dependencies": {
+    "purescript-unicode": "^3.0.1",
+    "purescript-console": "^3.0.0",
+    "purescript-midi": "https://github.com/newlandsvalley/purescript-midi.git#1.1.0"
+  }
+}

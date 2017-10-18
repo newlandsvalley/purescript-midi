@@ -1,6 +1,8 @@
 MIDI player example
 ===================
 
+purescript-midi version 1.0.0
+
 This example is a proof-of-concept for a MIDI player widget that might later be implemented as a Pux module.
 
 Building

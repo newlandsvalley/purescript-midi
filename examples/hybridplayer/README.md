@@ -1,6 +1,8 @@
 Hybrid MIDI player example
 ==========================
 
+purescript-midi version 1.0.0
+
 This example is a MIDI player that is a hybrid between the 'player' and the 'simpleplayer' examples.  The simpleplayer
 plays strictly in tempo but is uninterruptible. The widget in the player example allows the user to stop and start the playback but,
 because the UI is re-rendered after every note, fails to play strictly in time.  This hybrid version splits the MIDI performance

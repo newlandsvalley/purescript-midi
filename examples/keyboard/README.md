@@ -1,6 +1,8 @@
 Web-Midi example - MIDI Keyboard
 ================================
 
+purescript-midi version 1.0.0
+
 Try it [here](http://www.tradtunedb.org.uk:8601/).
 
 This example shows how you can detect MIDI input devices such as keyboards when they
