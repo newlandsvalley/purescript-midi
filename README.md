@@ -38,6 +38,8 @@ Data.Midi.Instrument is an enumerated type listing the various musical instrumen
 
 ## Examples
 
+All examples use version 1.0.0 of purescript-midi.  This version uses Signals for web-midi rather than async effects (Aff).
+
 * __midifile__ demonstrates basic MIDI file parsing.
 * __abcfile__ demonstrates converting an ABC file to a MIDI recording.
 * __keyboard__ demonstrates a playable keyboard that uses a variety of instrument soundfonts.

@@ -7,7 +7,7 @@ var wrapper = function() {
 
   function onMIDISuccessListen (midiAccess) {
 
-    console.log('onMIDISuccessListen');
+    // console.log('onMIDISuccessListen');
 
     var inputs = midiAccess.inputs.values();
     // loop over any register inputs and listen for data on each
@@ -18,7 +18,7 @@ var wrapper = function() {
 
   function onMIDISuccessDetect (midiAccess) {
 
-    console.log('onMIDISuccessDetect');
+    // console.log('onMIDISuccessDetect');
 
     var inputs = midiAccess.inputs.values();
     // loop over any register inputs and listen for data on each
@@ -31,11 +31,11 @@ var wrapper = function() {
 
   // register an input device
   function registerInput (input) {
-     /* */
+     /*
      console.log("Input port : [ type:'" + input.type + "' id: '" + input.id +
         "' manufacturer: '" + input.manufacturer + "' name: '" + input.name +
         "' version: '" + input.version + "']");
-     /* */
+     */
      var midiConnection = { connected : true
                           , portType : input.type
                           , id : input.id
@@ -51,7 +51,7 @@ var wrapper = function() {
 	  // showMIDIPorts(midi);
 	  var port = event.port, state = port.state, name = port.name, type = port.type, id = port.id;
 	  if (port.type == "input") {
-      console.log("State change:", state);
+      // console.log("State change:", state);
       if (state == "connected") {
         var midiConnection = {  connected : true
                               , portType : port.type
@@ -78,7 +78,7 @@ var wrapper = function() {
 
   function onMIDIMessage (event) {
     // sourceId = event.srcElement.id;
-    console.log("MIDI Message");
+    // console.log("MIDI Message");
     var encodedEvent = { timeStamp : event.timeStamp
                        , encodedBinary : encodeAsString(event.data)};
     messageCallback(encodedEvent)();
@@ -104,7 +104,7 @@ var wrapper = function() {
       messageCallback = midiMessageCallback;
 
       return function () {
-        console.log('MIDIConnect - listen');
+        // console.log('MIDIConnect - listen');
         // request MIDI access and then connect
         if (navigator.requestMIDIAccess) {
           navigator.requestMIDIAccess({
@@ -132,5 +132,5 @@ var wrapper = function() {
 }();
 
 exports.webMidiConnect = wrapper.webMidiConnect;
-exports.listenImpl = wrapper.listenImpl;
-exports.detectInputDevicesImpl = wrapper.detectInputDevicesImpl;
+exports.listen = wrapper.listenImpl;
+exports.detectInputDevices = wrapper.detectInputDevicesImpl;

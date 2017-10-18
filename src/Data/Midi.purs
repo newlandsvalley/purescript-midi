@@ -2,6 +2,7 @@ module Data.Midi
         ( Track(..)
         , Header(..)
         , Event(..)
+        , TimedEvent(..)
         , Message(..)
         , Recording(..)
         , Ticks
@@ -9,6 +10,7 @@ module Data.Midi
 
 import Prelude (class Show, class Eq, class Ord)
 import Data.List (List)
+import Data.Maybe (Maybe)
 import Data.Generic.Rep
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Ord (genericCompare)
@@ -53,6 +55,17 @@ instance eqEvent :: Eq Event where
   eq = genericEq
 instance ordEvent :: Ord Event where
   compare = genericCompare
+
+-- | a timestamped parsed MIDI Event message
+newtype TimedEvent = TimedEvent {
+    timeStamp :: Number
+  , event     :: Maybe Event
+  }
+
+derive instance genericTimedEvent:: Generic TimedEvent _
+
+instance showTimedEvent :: Show TimedEvent where
+  show = genericShow
 
 -- | Midi Message
 data Message = Message Ticks Event
