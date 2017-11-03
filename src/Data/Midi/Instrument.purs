@@ -1,7 +1,6 @@
 module Data.Midi.Instrument
   ( InstrumentName(..)
-  , InstrumentMap(..)
-  , instruments
+  , instrumentNames
   , gleitzmanName
   , read
   ) where
@@ -128,9 +127,6 @@ instance ordInstrumentName :: Ord InstrumentName where
 instance showInstrumentName :: Show InstrumentName where
   show x = GShow.genericShow x
 
--- a mapping of instrument name to channel
-type InstrumentMap = Map.Map String Int
-
 -- | convert a PSoM instrument name to the format Found
 -- | in the Gleitzman instrument soundfont library
 -- | https://github.com/gleitz/midi-js-soundfonts
@@ -150,15 +146,16 @@ gleitzmanName inst =
         else
           cons (toLower c) acc
 
+
 -- | the set of supported instruments, using the Gleitzman names
-instruments :: List String
-instruments =
+instrumentNames :: List String
+instrumentNames =
   map fst mapping
 
 -- | all this rigmarole is because there's no generic deriving for Read or Enum
 -- | at the moment in purescript.  Replace this if and when it arrives.
-names :: Map.Map String InstrumentName
-names =
+namesMap :: Map.Map String InstrumentName
+namesMap =
  Map.fromFoldable mapping
 
 mapping :: List (Tuple String InstrumentName)
@@ -296,4 +293,4 @@ mapping =
 
 read :: String -> Maybe InstrumentName
 read g =
-  Map.lookup g names
+  Map.lookup g namesMap
