@@ -193,6 +193,7 @@ midiEvent =
   -- traceEvent <$>
     choice
       [ metaEvent
+      , sysEx
       , noteOn
       , noteOff
       , noteAfterTouch
@@ -202,7 +203,7 @@ midiEvent =
       , pitchBend
       , runningStatus
       ]
-        <?> "midi message"
+        <?> "midi event"
 
 -- metadata parsers
 metaEvent :: Parser Event
@@ -223,7 +224,6 @@ metaEvent =
       , timeSignature
       , keySignature
       , sequencerSpecific
-      , sysEx
       , unspecified
       ]
         <?> "meta event"
