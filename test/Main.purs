@@ -2,7 +2,7 @@ module Test.Main where
 
 import Prelude (Unit, bind, discard, show, ($), (<<<), (<>))
 import Data.Midi (Recording)
-import Data.Midi.Parser (normalise, parse, translateRunningStatus)
+import Data.Midi.Parser (normalise, parse)
 import Data.Midi.Instrument
 import Node.Path as Path
 import Control.Monad.Eff (Eff)
@@ -108,4 +108,4 @@ canParse estr =
         where
           fullParse :: String -> Either String Recording
           fullParse s =
-            (translateRunningStatus <<< parse <<< normalise) s
+            (parse <<< normalise) s

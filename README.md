@@ -4,7 +4,7 @@ purescript-midi
 [![Latest release](http://img.shields.io/github/release/newlandsvalley/purescript-midi.svg)](https://github.com/newlandsvalley/purescript-midi/releases)
 [![Build Status](https://travis-ci.org/newlandsvalley/purescript-midi.svg?branch=master)](https://travis-ci.org/newlandsvalley/purescript-midi)
 
-This library provides MIDI support in PureScript.  It includes a MIDI parser and also has support for the Web MIDI API (currently only available in Chrome and, I think, Opera). For example, if you use Chrome and can plug in a MIDI keyboard you should to be able to play it using [this](http://www.tradtunedb.org.uk:8601/) demonstration.
+This library provides MIDI support in PureScript.  It includes a MIDI parser and also allows you to access the Web MIDI API (currently only available in Chrome and, I think, Opera). For example, if you use Chrome and can plug in a MIDI keyboard you should to be able to play it using [this](http://www.tradtunedb.org.uk:8601/) demonstration.
 
 ## Building
 
@@ -19,15 +19,13 @@ To parse a MIDI string that represents a recording and thus generate a value of 
 
     (parse <<< normalise) midi
 
-or, if the MIDI uses running status messages:
+In the latest release of the parser, running status messages that come from MIDI files are translated to the underlying channel messages _in situ_.
 
-    (translateRunningStatus <<< parse <<< normalise) midi
-
-so that these messages are translated to the underlying channel messages.
-
-On the other hand, you may merely need to parse MIDI events (such as note on or note off). This is more likely if you are connecting directly to a MIDI device and need to parse the stream of event messages as the instrument is played.  To do this, use:
+On the other hand, you may merely need to parse MIDI events (such as note on or note off) that emenate from a Web MIDI connection. In other words, you are connecting directly to a MIDI device through the browser and need to parse the stream of event messages as the instrument is played.  To do this, use:
 
     parseMidiEvent midiEvent
+    
+This will attempt to parse an individual event.  It works for all events other than System Exclusive events (these have a different format within a MIDI file from that in a stream).  
 
 ## Web MIDI
 

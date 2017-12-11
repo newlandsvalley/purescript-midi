@@ -2,24 +2,24 @@ module Data.Midi.Parser
         ( normalise
         , parse
         , parseMidiEvent
-        , translateRunningStatus
         ) where
 
-import Prelude (Unit, unit, ($), (<$>), (<*>), (*>), (+), (-), (>),
+import Prelude (Unit, unit, ($), (<$>), (<$), (<*>), (*>), (+), (-), (>),
                 (==), (>=), (<=), (&&), (>>=), (>>>), (<<<), map, pure, show, void)
 import Control.Alt ((<|>))
-import Data.List (List(..), (:), foldl, reverse)
+import Data.List (List(..), (:))
 import Data.Foldable (fold)
 import Data.Unfoldable (replicateA)
 import Data.Either (Either(..))
-import Data.Tuple (Tuple(..), fst, snd)
+import Data.Tuple (Tuple(..))
+import Data.Maybe (Maybe(..))
 import Data.Char (fromCharCode, toCharCode)
 import Data.String (singleton, fromCharArray, toCharArray)
 import Data.Int (pow)
 import Data.Int.Bits (and, shl)
-import Text.Parsing.StringParser (Parser, runParser, try)
+import Text.Parsing.StringParser (Parser, runParser, try, fail)
 import Text.Parsing.StringParser.String (anyChar, satisfy, string, char, noneOf)
-import Text.Parsing.StringParser.Combinators (choice, many, many1Till, (<?>))
+import Text.Parsing.StringParser.Combinators (choice, many, (<?>))
 
 import Data.Midi
 
@@ -178,18 +178,46 @@ midiTracks (Header h) =
 midiTrack :: Parser Track
 midiTrack =
   Track <$>
-     (string "MTrk" *> int32 *> many1Till midiMessage trackEndMessage <?> "midi track")
+     -- (string "MTrk" *> int32 *> many1Till midiMessage trackEndMessage <?> "midi track")
+     (string "MTrk" *> int32 *> midiMessages Nothing <?> "midi track")
 
+midiMessages :: Maybe Event -> Parser (List Message)
+midiMessages parent =
+    midiMessage parent
+        >>= moreMessageOrEnd
+
+moreMessageOrEnd :: Message -> Parser (List Message)
+moreMessageOrEnd lastMessage =
+  let
+    (Message ticks lastEvent) = lastMessage
+  in
+    ((:) lastMessage)
+      <$> choice
+            [ endOfTrack   -- must come first otherwise we need to use try
+            , midiMessages (Just lastEvent)
+            ]
+
+{- we don't place TrackEnd events into the parse tree - there is no need.
+   The end of the track is implied by the end of the event list
+-}
+
+
+endOfTrack :: Parser (List Message)
+endOfTrack =
+    Nil <$ trackEndMessage
 
 -- Note - it is important that runningStatus is placed last because of its catch-all definition
-midiMessage :: Parser Message
-midiMessage =
+midiMessage :: Maybe Event -> Parser Message
+midiMessage parent =
   Message
     <$> varInt
-    <*> midiEvent
+    <*> midiEvent parent
+    <?> "midi message"
 
-midiEvent :: Parser Event
-midiEvent =
+-- | we need to pass the parent event to running status events in order to
+-- | make sense of them.
+midiEvent :: Maybe Event -> Parser Event
+midiEvent parent =
   -- traceEvent <$>
     choice
       [ metaEvent
@@ -201,7 +229,7 @@ midiEvent =
       , programChange
       , channelAfterTouch
       , pitchBend
-      , runningStatus
+      , runningStatus parent
       ]
         <?> "midi event"
 
@@ -341,12 +369,46 @@ pitchBend :: Parser Event
 pitchBend =
   buildPitchBend <$> brange 0xE0 0xEF <*> int8 <*> int8 <?> "pitch bend"
 
-{- running status is somewhat anomalous.  It inherits the 'type' of the last event parsed, which must be a channel event.
-   This inherited channel event type is not put into the parse tree - this is left to an interpreter
--}
+-- | running status is somewhat anomalous.  It inherits the 'type' of the last event parsed,
+-- | (here called the parent) which must be a channel event.
+-- | We now macro-expand the running status message to be the type (and use the channel status)
+-- | of the parent.  If the parent is missing or is not a channel event, we fail the parse
+runningStatus :: Maybe Event -> Parser Event
+runningStatus parent =
+    -- RunningStatus <$> brange 0x00 0x7F <*> int8 <?> "running status"
+    case parent of
+        Just (NoteOn status _ _) ->
+            (NoteOn status) <$> int8 <*> int8 <?> "note on running status"
+
+        Just (NoteOff status _ _) ->
+            (NoteOff status) <$> int8 <*> int8 <?> "note off running status"
+
+        Just (NoteAfterTouch status _ _) ->
+            (NoteAfterTouch status) <$> int8 <*> int8 <?> "note aftertouch running status"
+
+        Just (ControlChange status _ _) ->
+            (ControlChange status) <$> int8 <*> int8 <?> "control change running status"
+
+        Just (ProgramChange status _) ->
+            (ProgramChange status) <$> int8 <?> "program change running status"
+
+        Just (ChannelAfterTouch status _) ->
+            (ChannelAfterTouch status) <$> int8 <?> "channel aftertouch running status"
+
+        Just (PitchBend status _) ->
+            (PitchBend status) <$> int8 <?> "pitch bend running status"
+
+        Just _ ->
+            fail "inappropriate parent for running status"
+
+        _ ->
+            fail "no parent for running status"
+
+{-
 runningStatus :: Parser Event
 runningStatus =
   RunningStatus <$> brange 0x00 0x7F <*> int8 <?> "running status"
+-}
 
 -- runningStatus = log "running status" <$> ( RunningStatus <$> brange 0x00 0x7F  <*> int8 <?> "running status")
 -- result builder
@@ -476,83 +538,12 @@ makeTuple a b =
 catChars :: List Char -> String
 catChars = fold <<< map singleton
 
-translateNextMessage :: Tuple Event Track -> Message -> Tuple  Event Track
-translateNextMessage acc nextMessage =
-  let
-    state = fst acc
-    Track messages = snd acc
-  in
-    case nextMessage of
-      Message ticks (RunningStatus x y) ->
-        let
-          translatedStatus =
-            interpretRS state x y
-        in
-          case translatedStatus of
-            Unspecified _ _ ->
-              -- couldn't translate the running status so drop it
-              Tuple state (Track messages)
-
-            _ ->
-              -- could translate the running status so adopt it
-              Tuple state ( Track ((Message ticks translatedStatus) : messages) )
-
-      Message _ other ->
-        Tuple other (Track (nextMessage : messages))
-
-
--- just update the state
-{- we can interpret the running status if we have a legitimate last event state which is a channel voice event -}
-interpretRS :: Event -> Int -> Int -> Event
-interpretRS last x y =
-  case last of
-    NoteOn chan _ _ ->
-      if (y == 0) then
-        NoteOff chan x y
-      else
-        NoteOn chan x y
-
-    NoteOff chan _ _ ->
-      NoteOff chan x y
-
-    NoteAfterTouch chan _ _ ->
-      NoteAfterTouch chan x y
-
-    ControlChange chan _ _ ->
-      ControlChange chan x y
-
-    ProgramChange _ _ ->
-      ProgramChange x y
-
-    ChannelAfterTouch _ _ ->
-      ChannelAfterTouch x y
-
-    PitchBend _ _ ->
-      PitchBend x y
-
-    _ ->
-      Unspecified 0 Nil
-
-unwrapTrack :: Track -> List Message
-unwrapTrack (Track t) = t
-
-
-translateAllRunningStatus :: Track -> Track
-translateAllRunningStatus wrappedTrack =
-  let
-    Track track = wrappedTrack
-    translate =
-      (Track <<< reverse <<< unwrapTrack <<< snd <<<
-        foldl translateNextMessage ( Tuple (Unspecified 0 Nil) (Track Nil) ))
-  in
-    translate track
-
 -- exported functions
 
 -- | Parse a MIDI event
 parseMidiEvent :: String -> Either String Event
 parseMidiEvent s =
-  case runParser midiEvent s of
+  case runParser (midiEvent Nothing) s of
     Right n ->
       Right n
 
@@ -576,16 +567,3 @@ normalise =
     f = toCharCode >>> ((and) 0xFF) >>> fromCharCode
   in
     toCharArray >>> map f >>> fromCharArray
-
--- | translate the Running Status messages in each track to the expanded form (NoteOn/NoteOff etc)
-translateRunningStatus :: Either String Recording -> Either String Recording
-translateRunningStatus res =
-  case res of
-    Right (Recording mr) ->
-      let
-        tracks = map translateAllRunningStatus mr.tracks
-      in
-        Right (Recording { header : mr.header, tracks : tracks })
-
-    err ->
-      err
