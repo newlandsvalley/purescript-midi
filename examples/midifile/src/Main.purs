@@ -5,7 +5,7 @@ import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Exception (EXCEPTION)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
-import Data.Midi.Parser (parse, normalise, translateRunningStatus)
+import Data.Midi.Parser (parse, normalise)
 import Prelude (Unit, bind, const, discard, show, pure, ($), (<>))
 import Pux (EffModel, noEffects, start)
 import Pux.DOM.Events (onChange)
@@ -58,7 +58,7 @@ viewParsedFile state =
 
 fullParse :: String -> String
 fullParse s =
-  case translateRunningStatus $ parse $ normalise $ s of
+  case parse $ normalise $ s of
     Left err ->
       ("Parse error:" <> err)
     Right midi ->

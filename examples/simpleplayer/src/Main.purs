@@ -11,7 +11,8 @@ import Control.Monad.Eff.Exception (EXCEPTION)
 import Data.Either (Either(..))
 import Data.Foldable (traverse_)
 import Data.Maybe (Maybe(..))
-import Data.Midi.Parser (parse, normalise, translateRunningStatus)
+import Data.Array (length)
+import Data.Midi.Parser (parse, normalise)
 import Prelude (Unit, bind, const, discard, negate, pure, show, ($), (>=), (<>))
 import Pux (EffModel, noEffects, start)
 import Pux.DOM.Events (onChange, onClick)
@@ -35,14 +36,14 @@ data Event
 type State =
   { fontLoad :: LoadResult
   , filespec :: Maybe Filespec
-  , recording :: Maybe Midi.Recording
+  , recording :: Either String Midi.Recording
   }
 
 initialState :: State
 initialState =
   { fontLoad : { instrument : "unknown", channel : (-1) }
   , filespec : Nothing
-  , recording : Nothing
+  , recording : Left "no recording"
   }
 
 foldp :: Event -> State -> EffModel State Event (au:: AUDIO, fileio :: FILEIO)
@@ -69,7 +70,7 @@ foldp (FileLoaded filespec) state =
    noEffects $ processFile filespec state
 foldp Play state =
   case state.recording of
-    Just rec ->
+    Right rec ->
       let
         notes = toPerformance rec
       in
@@ -80,7 +81,7 @@ foldp Play state =
                pure $ Just NoOp
            ]
         }
-    Nothing ->
+    Left err ->
       noEffects state
 
 processFile :: Filespec -> State -> State
@@ -89,13 +90,17 @@ processFile filespec state =
          , recording = fullParse filespec.contents
          }
 
-fullParse :: String -> Maybe Midi.Recording
+fullParse :: String -> Either String Midi.Recording
 fullParse s =
-  case translateRunningStatus $ parse $ normalise $ s of
+  parse $ normalise s
+
+{-}
+  case parse $ normalise $ s of
     Left err ->
       Nothing
     Right midi ->
       Just midi
+-}
 
 debugNote  :: MidiNote -> HTML Event
 debugNote n =
@@ -104,21 +109,21 @@ debugNote n =
 debugRecordingState :: State -> HTML Event
 debugRecordingState state =
   case state.recording of
-    Just rec ->
+    Right rec ->
       let
         notes = toPerformance rec
       in
         div do
-          -- p $ text ("recording has " <> (show $ length notes) <> " notes")
-          traverse_ debugNote notes
-    _ ->
+          p $ text ("recording has " <> (show $ length notes) <> " notes")
+          -- traverse_ debugNote notes
+    Left err ->
       do
-        p $ text "got no recording"
+        p $ text ("error: " <> err)
 
 viewPlayButton :: State -> HTML Event
 viewPlayButton state =
   case state.recording of
-    Just rec ->
+    Right rec ->
       button #! onClick (const Play) $ text "play"
     _ ->
       p $ text ""

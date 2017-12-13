@@ -20,6 +20,9 @@ type Ticks =
     Int
 
 -- |  Midi Event
+-- |
+-- | Note that RunningStatus messages are not included within Event
+-- | because the parser translates them to the underlying channel messages
 data Event
     = -- meta messages
       SequenceNumber Int
@@ -46,7 +49,6 @@ data Event
     | ProgramChange Int Int
     | ChannelAfterTouch Int Int
     | PitchBend Int Int
-    | RunningStatus Int Int
 
 derive instance genericEvent :: Generic Event _
 instance showEvent :: Show Event where
