@@ -38,8 +38,8 @@ data Event
     | SMPTEOffset Int Int Int Int Int
     | TimeSignature Int Int Int Int
     | KeySignature Int Int
-    | SequencerSpecific String
-    | SysEx String
+    | SequencerSpecific (List Int)
+    | SysEx (List Int)
     | Unspecified Int (List Int)
       -- channel messages
     | NoteOn Int Int Int

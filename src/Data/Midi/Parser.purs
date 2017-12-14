@@ -267,6 +267,14 @@ parseMetaString target =
     <$>
       (bchar target *> varInt >>= (\l -> count l anyChar))
 
+{- parse a simple meta event as a List of Ints -}
+parseMetaInts :: Int -> Parser (List Int)
+parseMetaInts target =
+  (map toCharCode)
+    <$>
+      (bchar target *> varInt >>= (\l -> count l anyChar))
+
+
 text :: Parser Event
 text =
   Text <$> parseMetaString 0x01 <?> "text"
@@ -317,12 +325,11 @@ keySignature =
 
 sequencerSpecific :: Parser Event
 sequencerSpecific =
-  SequencerSpecific <$> parseMetaString 0x7F <?> "sequencer specific"
+  SequencerSpecific <$> parseMetaInts 0x7F <?> "sequencer specific"
 
 sysEx :: Parser Event
 sysEx =
-  -- SysEx <$> (String.fromList <$> (bchoice 0xF0 0xF7 *> varInt `andThen` (\l -> count l anyChar))) <?> "system exclusive"
-  SysEx <$> (catChars <$> (bchoice 0xF0 0xF7 *> varInt >>= (\l -> count l anyChar))) <?> "system exclusive"
+  SysEx <$> (map toCharCode <$> (bchoice 0xF0 0xF7 *> varInt >>= (\l -> count l anyChar))) <?> "system exclusive"
 
 {- parse an unspecified meta event
    The possible range for the type is 00-7F. Not all values in this range are defined, but programs must be able
@@ -404,14 +411,7 @@ runningStatus parent =
         _ ->
             fail "no parent for running status"
 
-{-
-runningStatus :: Parser Event
-runningStatus =
-  RunningStatus <$> brange 0x00 0x7F <*> int8 <?> "running status"
--}
 
--- runningStatus = log "running status" <$> ( RunningStatus <$> brange 0x00 0x7F  <*> int8 <?> "running status")
--- result builder
 {- build a Header and make the chunk length available so that any overspill bytes can
    later be quietly ignored
 -}
