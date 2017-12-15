@@ -1,21 +1,21 @@
 purescript-midi examples
 ========================
 
-### v1.1.0 examples
+### v1.1.0 (or newer) examples
 
 * __keyboard-signal__ demonstrates logging web-midi messages.
+* __midifile__ demonstrates basic MIDI file parsing.
+* __simpleplayer__ demonstrates playing a MIDI file by converting to a single uninterruptible Web-Audio graph.
 
 ### v1.0.0 examples
 
 These are now a little out of date because they use async effects (Aff) for web-midi rather than signals. Soundfonts are taken from polyphonic-soundfonts 1.0.0.
 
-* __midifile__ demonstrates basic MIDI file parsing.
 * __abcfile__ demonstrates converting an ABC file to a MIDI recording.
 * __keyboard__ demonstrates a playable keyboard that uses a variety of instrument soundfonts.
 
-and three different players: 
+and two other players: 
 
-* __simpleplayer__ demonstrates playing a MIDI file by converting to a single uninterruptible Web-Audio graph.
 * __player__ demonstrates a MIDI player widget that plays each note as an individual Web-Audio instruction.
 * __hybridplayer__ demonstrates a MIDI player widget that plays a phrase (consisting of a bunch of notes) before allowing a UI update.
 
