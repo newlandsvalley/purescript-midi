@@ -61,6 +61,8 @@ parserSuite = do
       assertParses "Galway-Hornpipe.midi"
     test "Planxty Burke" do
       assertParses "plxburke.midi"
+    test "The bonny bonny banks of loch Lomond" do
+      assertParses "lomond.midi"
 
 instrumentSuite :: forall t. Free (TestF t) Unit
 instrumentSuite = do

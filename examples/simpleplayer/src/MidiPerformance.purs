@@ -4,8 +4,8 @@ import Control.Monad.State as ControlState
 import Audio.SoundFont (MidiNote)
 import Data.Midi as Midi
 import Data.Tuple (Tuple(..), fst, snd)
-import Data.Array ((:), reverse)
-import Data.List (List(..), head)
+-- import Data.Array ((:), reverse)
+import Data.List (List(..), index, reverse, (:))
 import Data.Maybe (Maybe, fromMaybe)
 import Data.Int (toNumber)
 import Prelude (bind, pure, (*), (+), (/), (==))
@@ -16,39 +16,39 @@ type TState =
     { ticksPerBeat :: Int        -- taken from the MIDI header
     , tempo :: Int               -- this will almost certainly be reset at the start of the MIDI file
     , noteOffset :: Number       -- the offset in time of the next note to be processed
-    , notes :: Array MidiNote    -- the ever-increasing set of generated notes
+    , notes :: List MidiNote    -- the ever-increasing set of generated notes
     }
 
 type TransformationState =
-  Tuple TState (Array MidiNote)
+  Tuple TState (List MidiNote)
 
 initialTState :: Int -> TState
 initialTState ticksPerBeat =
   { ticksPerBeat : ticksPerBeat
   , tempo : 1000000
   , noteOffset : 0.0
-  , notes : []
+  , notes : Nil
   }
 
 initialTransformationState :: Int -> TransformationState
 initialTransformationState ticksPerBeat =
-  Tuple (initialTState ticksPerBeat) []
+  Tuple (initialTState ticksPerBeat) Nil
 
 -- | transform a Midi.Recording to a MIDI performance
 -- | which is simply an array of MIDI notes, each timed to
 -- | be played at the appropriate time offset
-toPerformance :: Midi.Recording -> Array MidiNote
-toPerformance (Midi.Recording recording) =
+toPerformance :: Midi.Recording -> Int -> List MidiNote
+toPerformance (Midi.Recording recording) trackNo =
   let
-    mtrack0 :: Maybe Midi.Track
-    mtrack0 = head recording.tracks
-    Midi.Track track0 = fromMaybe (Midi.Track Nil) mtrack0
+    mtrack :: Maybe Midi.Track
+    mtrack = index recording.tracks trackNo
+    Midi.Track track = fromMaybe (Midi.Track Nil) mtrack
     Midi.Header header = recording.header
   in
     do
-      ControlState.evalState (transformTrack track0) (initialTransformationState header.ticksPerBeat)
+      ControlState.evalState (transformTrack track) (initialTransformationState header.ticksPerBeat)
 
-transformTrack :: List Midi.Message -> ControlState.State TransformationState (Array MidiNote)
+transformTrack :: List Midi.Message -> ControlState.State TransformationState (List MidiNote)
 transformTrack Nil =
   do
     retrieveMelody
@@ -57,7 +57,7 @@ transformTrack (Cons m ms) =
     _ <- transformMessage m
     transformTrack ms
 
-transformMessage :: Midi.Message -> ControlState.State TransformationState (Array MidiNote)
+transformMessage :: Midi.Message -> ControlState.State TransformationState (List MidiNote)
 transformMessage m =
   case m of
     Midi.Message ticks (Midi.Tempo tempo) ->
@@ -67,7 +67,7 @@ transformMessage m =
     Midi.Message ticks _ ->
       accumulateTicks ticks
 
-accumulateNoteOn :: Int -> Int -> Int -> Int -> ControlState.State TransformationState (Array MidiNote)
+accumulateNoteOn :: Int -> Int -> Int -> Int -> ControlState.State TransformationState (List MidiNote)
 accumulateNoteOn channel ticks pitch velocity =
   do
     tpl <- ControlState.get
@@ -87,7 +87,7 @@ accumulateNoteOn channel ticks pitch velocity =
     _ <- ControlState.put tpl'
     pure recording
 
-accumulateTicks :: Int -> ControlState.State TransformationState (Array MidiNote)
+accumulateTicks :: Int -> ControlState.State TransformationState (List MidiNote)
 accumulateTicks ticks =
   do
     tpl <- ControlState.get
@@ -100,7 +100,7 @@ accumulateTicks ticks =
     _ <- ControlState.put tpl'
     pure recording
 
-accumulateTempo :: Int -> Int -> ControlState.State TransformationState (Array MidiNote)
+accumulateTempo :: Int -> Int -> ControlState.State TransformationState (List MidiNote)
 accumulateTempo ticks tempo =
   do
     tpl <- ControlState.get
@@ -119,7 +119,7 @@ ticksToTime  :: Int -> TState -> Number
 ticksToTime ticks tstate =
   (toNumber ticks * toNumber tstate.tempo) / (toNumber tstate.ticksPerBeat * 1000000.0)
 
-retrieveMelody :: ControlState.State TransformationState (Array MidiNote)
+retrieveMelody :: ControlState.State TransformationState (List MidiNote)
 retrieveMelody =
   do
     tpl <- ControlState.get
