@@ -183,19 +183,18 @@ midiTrack =
 
 midiMessages :: Maybe Event -> Parser (List Message)
 midiMessages parent =
-    midiMessage parent
-        >>= moreMessageOrEnd
+  endOfTrack <|>
+    (midiMessage parent
+        >>= moreMessages
+    )
 
-moreMessageOrEnd :: Message -> Parser (List Message)
-moreMessageOrEnd lastMessage =
+moreMessages :: Message -> Parser (List Message)
+moreMessages lastMessage =
   let
     (Message ticks lastEvent) = lastMessage
   in
     ((:) lastMessage)
-      <$> choice
-            [ endOfTrack   -- must come first otherwise we need to use try
-            , midiMessages (Just lastEvent)
-            ]
+      <$> midiMessages (Just lastEvent)
 
 {- we don't place TrackEnd events into the parse tree - there is no need.
    The end of the track is implied by the end of the event list
