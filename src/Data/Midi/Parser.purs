@@ -326,9 +326,10 @@ sequencerSpecific :: Parser Event
 sequencerSpecific =
   SequencerSpecific <$> parseMetaInts 0x7F <?> "sequencer specific"
 
+-- | JMW note complete
 sysEx :: Parser Event
 sysEx =
-  SysEx <$> (map toCharCode <$> (bchoice 0xF0 0xF7 *> varInt >>= (\l -> count l anyChar))) <?> "system exclusive"
+  SysEx F0 <$> (map toCharCode <$> (bchoice 0xF0 0xF7 *> varInt >>= (\l -> count l anyChar))) <?> "system exclusive"
 
 {- parse an unspecified meta event
    The possible range for the type is 00-7F. Not all values in this range are defined, but programs must be able

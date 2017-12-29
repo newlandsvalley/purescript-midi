@@ -6,6 +6,11 @@ module Data.Midi
         , Message(..)
         , Recording(..)
         , Ticks
+        , Byte
+        , Channel
+        , Note
+        , Velocity
+        , SysExFlavour(..)
         ) where
 
 import Prelude (class Show, class Eq, class Ord)
@@ -16,8 +21,27 @@ import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Ord (genericCompare)
 import Data.Generic.Rep.Show (genericShow)
 
-type Ticks =
-    Int
+type Ticks = Int
+
+type Byte = Int
+
+type Channel = Int
+
+type Note = Int
+
+type Velocity = Int
+
+data SysExFlavour
+    = F0 -- normal
+    | F7 -- escaped
+
+derive instance genericSysExFlavour :: Generic SysExFlavour _
+instance showSysExFlavour :: Show SysExFlavour where
+  show = genericShow
+instance eqSysExFlavour :: Eq SysExFlavour where
+  eq = genericEq
+instance ordSysExFlavour :: Ord SysExFlavour where
+  compare = genericCompare
 
 -- |  Midi Event
 -- |
@@ -38,17 +62,17 @@ data Event
     | SMPTEOffset Int Int Int Int Int
     | TimeSignature Int Int Int Int
     | KeySignature Int Int
-    | SequencerSpecific (List Int)
-    | SysEx (List Int)
-    | Unspecified Int (List Int)
+    | SequencerSpecific (List Byte)
+    | SysEx SysExFlavour (List Byte)
+    | Unspecified Int (List Byte)
       -- channel messages
-    | NoteOn Int Int Int
-    | NoteOff Int Int Int
-    | NoteAfterTouch Int Int Int
-    | ControlChange Int Int Int
-    | ProgramChange Int Int
-    | ChannelAfterTouch Int Int
-    | PitchBend Int Int
+    | NoteOn Channel Note Velocity
+    | NoteOff Channel Note Velocity
+    | NoteAfterTouch Channel Note Velocity
+    | ControlChange Channel Int Int
+    | ProgramChange Channel Int
+    | ChannelAfterTouch Channel Velocity
+    | PitchBend Channel Int
 
 derive instance genericEvent :: Generic Event _
 instance showEvent :: Show Event where
