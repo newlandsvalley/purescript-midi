@@ -1,7 +1,7 @@
 module Test.Parser (parserChecksSuite) where
 
 
-import Prelude (Unit, ($), (<$>), (<*>), (==), bind, discard, map, pure)
+import Prelude (Unit, ($), (<$>), (<*>), bind, discard, map, pure)
 import Data.List (List, toUnfoldable)
 import Data.Either (Either(..))
 import Data.NonEmpty (NonEmpty, (:|))
@@ -56,6 +56,17 @@ arbVelocity = chooseInt 0 127
 arbTrackCount :: Gen Int
 arbTrackCount = chooseInt 1 5
 
+-- | multi-track recordings:
+-- | type 1 is simultaneous, type 2 is sequentially independent
+-- | single tracks must be type 0
+arbTrackFormat :: Int -> Gen Int
+arbTrackFormat trackCount =
+  case trackCount of
+    1 ->
+      pure 0
+    _ ->
+      chooseInt 1 2
+
 -- | because velocity 0 means NoteOff, we don't want to issue
 -- | this whilst generating NoteOn
 arbPositiveVelocity :: Gen Int
@@ -107,9 +118,6 @@ commonEvents =
     , arbPitchBend
     ]
 
-
-
-
 arbTestEvent :: Gen TestEvent
 arbTestEvent =
   TestEvent <$> oneOf commonEvents
@@ -134,12 +142,7 @@ arbTracks trackCount =
 arbHeader :: Int -> Gen Header
 arbHeader trackCount =
   do
-    let
-      formatType =
-        if trackCount == 1 then
-          0
-        else
-          1
+    formatType <- arbTrackFormat trackCount
     pure
       (Header
         { formatType : formatType
@@ -148,10 +151,10 @@ arbHeader trackCount =
         }
       )
 
-
-arbRecording :: Int -> Gen Recording
-arbRecording trackCount =
+arbRecording :: Gen Recording
+arbRecording =
     do
+      trackCount <- arbTrackCount
       header <- arbHeader trackCount
       tracks <- arbTracks trackCount
       pure
@@ -161,28 +164,29 @@ arbRecording trackCount =
           }
         )
 
-
 arbTestRecording :: Gen TestRecording
 arbTestRecording =
-  TestRecording <$> arbRecording 5
+  TestRecording <$> arbRecording
 
 toByteString :: List Int -> String
 toByteString list =
     fromCharArray $ map fromCharCode (toUnfoldable list)
 
+-- | the test properties
+
 roundTripEventProperty :: TestEvent -> Result
 roundTripEventProperty (TestEvent e) =
   let
-    pme = parseMidiEvent $ toByteString $ Generate.event e
+    event = parseMidiEvent $ toByteString $ Generate.event e
   in
-    (Right e :: Either String Event) === pme
+    (Right e :: Either String Event) === event
 
 roundTripMessageProperty :: TestMessage -> Result
 roundTripMessageProperty (TestMessage m) =
   let
-    pmm = parseMidiMessage $ toByteString $ Generate.midiMessage m
+    message = parseMidiMessage $ toByteString $ Generate.midiMessage m
   in
-    (Right m :: Either String Message) === pmm
+    (Right m :: Either String Message) === message
 
 roundTripRecordingProperty :: TestRecording -> Result
 roundTripRecordingProperty (TestRecording r) =
@@ -191,8 +195,7 @@ roundTripRecordingProperty (TestRecording r) =
   in
     (Right r :: Either String Recording) === recording
 
-
-
+-- | the test suite
 parserChecksSuite :: forall t. Free (TestF (random :: RANDOM | t)) Unit
 parserChecksSuite = do
   suite "parser" do
