@@ -16,7 +16,7 @@ import Test.Unit.QuickCheck (quickCheck)
 import Test.QuickCheck.Gen (Gen, chooseInt, oneOf)
 import Data.Midi
 import Data.Midi.Generate as Generate
-import Data.Midi.Parser (parseMidiEvent)
+import Data.Midi.Parser (parseMidiEvent, parseMidiMessage)
 
 -- | quickcheck-style tests adapted from the elm-comidi tests courtesy of @rhofour
 
@@ -32,6 +32,11 @@ instance testEventarb :: Arbitrary TestEvent where
   arbitrary = arbTestEvent
 
 
+newtype TestMessage = TestMessage Message
+
+instance testMessagearb :: Arbitrary TestMessage where
+  arbitrary = arbTestMessage
+
 -- generators
 arbChannel :: Gen Int
 arbChannel = chooseInt 0 15
@@ -42,15 +47,21 @@ arbNote = chooseInt 0 127
 arbVelocity :: Gen Int
 arbVelocity = chooseInt 0 127
 
+-- | because velocity 0 means NoteOff, we don't want to issue
+-- | this whilst generating NoteOn
 arbPositiveVelocity :: Gen Int
 arbPositiveVelocity = chooseInt 1 127
 
 arbControllerNumber :: Gen Int
 arbControllerNumber = chooseInt 0 119
 
+-- | generate an arbitrary delta time which will be encoded as a varInt
+arbDeltaTime :: Gen Int
+arbDeltaTime = chooseInt 0 0x0FFFFFFF
+
 arbNoteOn :: Gen Event
 arbNoteOn =
-  NoteOn <$> arbChannel <*> arbNote <*> arbVelocity
+  NoteOn <$> arbChannel <*> arbNote <*> arbPositiveVelocity
 
 arbNoteOff :: Gen Event
 arbNoteOff =
@@ -91,6 +102,11 @@ arbTestEvent :: Gen TestEvent
 arbTestEvent =
   TestEvent <$> oneOf commonEvents
 
+arbTestMessage :: Gen TestMessage
+arbTestMessage =
+  TestMessage <$> (Message <$>
+     arbDeltaTime <*> (oneOf commonEvents))
+
 toByteString :: List Int -> String
 toByteString list =
     fromCharArray $ map fromCharCode (toUnfoldable list)
@@ -102,8 +118,18 @@ roundTripEventProperty (TestEvent e) =
   in
     (Right e :: Either String Event) === pme
 
+roundTripMessageProperty :: TestMessage -> Result
+roundTripMessageProperty (TestMessage m) =
+  let
+    pmm = parseMidiMessage $ toByteString $ Generate.midiMessage m
+  in
+    (Right m :: Either String Message) === pmm
+
+
 parserChecksSuite :: forall t. Free (TestF (random :: RANDOM | t)) Unit
 parserChecksSuite = do
   suite "parser" do
     test "round trip event" do
       quickCheck roundTripEventProperty
+    test "round trip message" do
+      quickCheck roundTripMessageProperty

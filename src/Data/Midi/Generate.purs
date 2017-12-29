@@ -1,4 +1,4 @@
-module Data.Midi.Generate (event, recording) where
+module Data.Midi.Generate (event, recording, midiMessage) where
 
 -- | Library for encoding MIDI types as "binary"
 -- | adapted from the elm-comidi version courtesy of @rhofour

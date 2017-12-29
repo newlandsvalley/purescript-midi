@@ -2,13 +2,15 @@ module Data.Midi.Parser
         ( normalise
         , parse
         , parseMidiEvent
+        , parseMidiMessage
         ) where
 
-import Prelude (Unit, unit, ($), (<$>), (<$), (<*>), (*>), (+), (-), (>),
+import Prelude (Unit, unit, ($), (<$>), (<$), (<*>), (*>), (+), (-), (>), (<),
                 (==), (>=), (<=), (&&), (>>=), (>>>), (<<<), map, pure, show, void)
 import Control.Alt ((<|>))
 import Data.List (List(..), (:))
-import Data.Foldable (fold)
+import Data.Array (cons) as Array
+import Data.Foldable (fold, foldl)
 import Data.Unfoldable (replicateA)
 import Data.Either (Either(..))
 import Data.Tuple (Tuple(..))
@@ -56,12 +58,23 @@ int8 =
 signedInt8 :: Parser Int
 signedInt8 =
   (\i ->
+    if (i > 127) then
+      i - 256
+    else
+      i
+  )
+    <$> int8
+
+{-}
+signedInt8 =
+  (\i ->
     if (topBitSet i) then
       i - 256
     else
       i
   )
     <$> int8
+-}
 
 {- parse a specific binary 8 bit integer -}
 bchar :: Int -> Parser Int
@@ -117,7 +130,22 @@ int32 =
     toInt32 <$> int8 <*> int8 <*> int8 <*> int8
 
 -- variable length integers
--- (need to somehow check this for lengths above 16 bits)
+
+varIntHelper :: Parser (Array Int)
+varIntHelper =
+  int8
+    >>= (\n ->
+          if (n < 128) then
+            pure  [ n ]
+          else
+            (Array.cons (and 127 n)) <$> varIntHelper
+        )
+
+varInt :: Parser Int
+varInt =
+  foldl (\acc -> \n -> (shl acc 7) + n) 0 <$> varIntHelper
+
+{- old, buggy version for high values of the Int
 varInt :: Parser Int
 varInt =
   int8
@@ -127,6 +155,7 @@ varInt =
           else
             pure n
         )
+-}
 
 {- just for debug purposes - consume the rest of the input -}
 rest :: Parser (List Char)
@@ -567,3 +596,13 @@ normalise =
     f = toCharCode >>> ((and) 0xFF) >>> fromCharCode
   in
     toCharArray >>> map f >>> fromCharArray
+
+-- temporary form testing purposes
+parseMidiMessage :: String -> Either String Message
+parseMidiMessage s =
+  case runParser (midiMessage Nothing) s of
+    Right n ->
+      Right n
+
+    Left e ->
+      Left $ show e
