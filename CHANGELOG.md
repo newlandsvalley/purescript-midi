@@ -8,10 +8,10 @@
 * Expand running status messages in situ.  
 * Get rid of translateRunningStatus post-processing
 * Amend SysEx handling
-* Add type aliases for Channel, Velocity, Byte etc.
 
 #### additions
 * Add 'binary' MIDI generation
+* Add type aliases for Channel, Velocity, Byte etc.
 
 #### bug fixes
 * Correct varInt parsing for large integer values
