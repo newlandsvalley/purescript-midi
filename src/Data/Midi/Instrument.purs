@@ -2,6 +2,7 @@ module Data.Midi.Instrument
   ( InstrumentName(..)
   , instrumentNames
   , gleitzmanName
+  , gleitzmanNames
   , read
   ) where
 
@@ -15,7 +16,7 @@ import Data.String (fromCharArray, toCharArray)
 import Data.Char.Unicode (isUpper, isDigit, toLower)
 import Data.Array (cons, drop)
 import Data.List (List(..), (:))
-import Data.Tuple (Tuple(..), fst)
+import Data.Tuple (Tuple(..), fst, snd)
 import Data.Map (Map, fromFoldable, lookup) as Map
 import Data.Maybe (Maybe)
 
@@ -148,9 +149,14 @@ gleitzmanName inst =
 
 
 -- | the set of supported instruments, using the Gleitzman names
-instrumentNames :: List String
-instrumentNames =
+gleitzmanNames :: List String
+gleitzmanNames =
   map fst mapping
+
+-- | the set of supported instruments
+instrumentNames :: List InstrumentName
+instrumentNames =
+  map snd mapping
 
 -- | all this rigmarole is because there's no generic deriving for Read or Enum
 -- | at the moment in purescript.  Replace this if and when it arrives.

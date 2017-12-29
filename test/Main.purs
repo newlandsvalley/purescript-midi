@@ -11,7 +11,7 @@ import Test.Unit (suite)
 import Test.Unit.Main (runTest)
 import Test.Unit.Console (TESTOUTPUT)
 import Test.FileParser (parserSuite)
-import Test.Instrument (instrumentSuite)
+import Test.Instrument (instrumentChecksSuite)
 import Test.Parser (parserChecksSuite)
 
 main :: forall t.
@@ -29,5 +29,5 @@ main =
   runTest do
     suite "midi" do
       parserSuite
-      instrumentSuite
+      instrumentChecksSuite
       parserChecksSuite

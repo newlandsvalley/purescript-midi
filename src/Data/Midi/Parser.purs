@@ -201,9 +201,6 @@ midiTracks :: Header -> Parser Recording
 midiTracks (Header h) =
   buildRecording (Header h) <$> count h.trackCount midiTrack <?> "midi tracks"
 
-{- we don't place TrackEnd events into the parse tree - there is no need.
-   The end of the track is implied by the end of the event list
--}
 midiTrack :: Parser Track
 midiTrack =
   Track <$>
@@ -521,7 +518,8 @@ buildChannelAfterTouch cmd num =
 {- build Pitch Bend -}
 buildPitchBend :: Int -> Int -> Int -> Event
 buildPitchBend cmd lsb msb =
-  channelBuilder2 PitchBend cmd $ lsb + shiftLeftSeven msb
+  channelBuilder2 PitchBend cmd $ lsb + (shl msb 7)
+  --  channelBuilder2 PitchBend cmd $ lsb + shiftLeftSeven msb
 
 {- build a Time Signature -}
 buildTimeSig :: Int -> Int -> Int -> Int -> Event
@@ -547,6 +545,7 @@ consumeOverspill actual expected =
                     count (cnt - expected) int8
         )
 
+{-}
 topBitSet :: Int -> Boolean
 topBitSet n =
   and n 0x80 > 0
@@ -558,6 +557,7 @@ clearTopBit n =
 shiftLeftSeven :: Int -> Int
 shiftLeftSeven n =
     n `shl` 7
+-}
 
 makeTuple :: forall a b. a -> b -> Tuple a b
 makeTuple a b =
@@ -597,7 +597,7 @@ normalise =
   in
     toCharArray >>> map f >>> fromCharArray
 
--- temporary form testing purposes
+-- temporary for testing purposes
 parseMidiMessage :: String -> Either String Message
 parseMidiMessage s =
   case runParser (midiMessage Nothing) s of

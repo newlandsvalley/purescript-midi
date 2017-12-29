@@ -8,6 +8,8 @@
 * Expand running status messages in situ.  
 * Get rid of translateRunningStatus post-processing
 * Amend SysEx handling
+* Instrument.instrumentNames now returns a list of InstrumentName.  The previous
+  version returning a list of strings is renamed to gleitzmanNames.
 
 #### additions
 * Add 'binary' MIDI generation

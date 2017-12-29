@@ -1,24 +1,45 @@
-module Test.Instrument (instrumentSuite) where
+module Test.Instrument (instrumentChecksSuite) where
 
-import Prelude (Unit, discard)
-import Control.Monad.Free (Free)
-import Test.Unit.Assert (equal) as Assert
-import Test.Unit (TestF, test, suite)
+
+import Prelude (Unit, ($), (<$>), discard)
+import Data.List (toUnfoldable)
+import Data.NonEmpty ((:|))
 import Data.Maybe (Maybe(..))
-import Data.Midi.Instrument
+import Control.Monad.Free (Free)
+import Control.Monad.Eff.Random (RANDOM)
+import Test.Unit (TestF, test, suite)
+import Test.Unit.Assert (equal) as Assert
+import Test.QuickCheck.Arbitrary (class Arbitrary)
+import Test.QuickCheck (Result(), (===))
+import Test.Unit.QuickCheck (quickCheck)
+import Test.QuickCheck.Gen (Gen, elements)
+import Data.Midi.Instrument (InstrumentName(..), gleitzmanName, instrumentNames, read)
 
-instrumentSuite :: forall t. Free (TestF t) Unit
-instrumentSuite = do
+newtype TestInstrument = TestInstrument InstrumentName
+
+instance testInstrumentarb :: Arbitrary TestInstrument where
+  arbitrary = arbTestInstrument
+
+arbInstrumentName :: Gen InstrumentName
+arbInstrumentName =
+  elements $
+    AcousticGrandPiano :| toUnfoldable instrumentNames
+
+arbTestInstrument :: Gen TestInstrument
+arbTestInstrument =
+  TestInstrument <$> arbInstrumentName
+
+roundTripInstrumentProperty :: TestInstrument -> Result
+roundTripInstrumentProperty (TestInstrument i) =
+  let
+    instrument = read $ gleitzmanName i
+  in
+    (Just i :: Maybe InstrumentName) === instrument
+
+instrumentChecksSuite :: forall t. Free (TestF (random :: RANDOM | t)) Unit
+instrumentChecksSuite = do
   suite "instrument" do
-    test "Marimba" do
-      Assert.equal "marimba" (gleitzmanName Marimba)
-    test "AcousticGrandPiano" do
-      Assert.equal "acoustic_grand_piano" (gleitzmanName AcousticGrandPiano)
-    test "Lead2Sawtooth" do
-      Assert.equal "lead_2_sawtooth" (gleitzmanName Lead2Sawtooth)
-    test "SynthBass1" do
-      Assert.equal "synth_bass_1" (gleitzmanName SynthBass1)
-    test "acoustic_grand_piano" do
-      Assert.equal (Just AcousticGrandPiano) (read "acoustic_grand_piano")
     test "unknown" do
       Assert.equal Nothing (read "unknown")
+    test "round trip instrument name" do
+      quickCheck roundTripInstrumentProperty
