@@ -7,7 +7,9 @@
 
 * Expand running status messages in situ.  
 * Get rid of translateRunningStatus post-processing
-* Amend SysEx handling
+* Disallow running status in event streams
+* Separate stream event handling from file event handling
+  (SysEx parsing is different in the two contexts)
 * Instrument.instrumentNames now returns a list of InstrumentName.  The previous
   version returning a list of strings is renamed to gleitzmanNames.
 

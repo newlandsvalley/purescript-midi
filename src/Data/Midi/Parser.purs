@@ -6,7 +6,7 @@ module Data.Midi.Parser
         ) where
 
 import Prelude (Unit, unit, ($), (<$>), (<$), (<*>), (*>), (+), (-), (>), (<),
-                (==), (>=), (<=), (&&), (>>=), (>>>), (<<<), map, pure, show, void)
+                (==), (>=), (<=), (&&), (>>=), (>>>), (<<<), (<>), map, pure, show, void)
 import Control.Alt ((<|>))
 import Data.List (List(..), (:))
 import Data.Array (cons) as Array
@@ -21,7 +21,7 @@ import Data.Int (pow)
 import Data.Int.Bits (and, shl)
 import Text.Parsing.StringParser (Parser, runParser, try, fail)
 import Text.Parsing.StringParser.String (anyChar, satisfy, string, char, noneOf)
-import Text.Parsing.StringParser.Combinators (choice, many, (<?>))
+import Text.Parsing.StringParser.Combinators (choice, many, many1Till, (<?>))
 
 import Data.Midi
 
@@ -38,6 +38,14 @@ traceEvent p =
   trace (show p) (\_ -> p)
 
 -}
+
+-- | By default, functions in this module refer to parsing MIDI files
+-- | where they refer to parsing event streams from a web-midi connection
+-- | then function names are prefaced by 'stream'
+
+-- constants
+sysExTerminator :: Int
+sysExTerminator = 0xF7
 
 -- low level parsers
 
@@ -97,11 +105,11 @@ bchoice x y =
 
 notTrackEnd :: Parser Int
 notTrackEnd =
-  let
-    c =
-      fromCharCode 0x2F
-  in
-    toCharCode <$> noneOf [ c ]
+  toCharCode <$> noneOf [ fromCharCode 0x2F ]
+
+notSysExEnd :: Parser Char
+notSysExEnd =
+  noneOf [ fromCharCode sysExTerminator ]
 
 -- fixed length integers
 int16 :: Parser Int
@@ -258,6 +266,25 @@ midiEvent parent =
       ]
         <?> "midi event"
 
+-- | stream events from web-MIDI streams differ from file events in that:
+-- |   * running status is not supported
+-- |   * SysEx messages do not preface the bytes with a length
+midiStreamEvent :: Parser Event
+midiStreamEvent =
+  -- traceEvent <$>
+    choice
+      [ metaEvent
+      , streamSysEx
+      , noteOn
+      , noteOff
+      , noteAfterTouch
+      , controlChange
+      , programChange
+      , channelAfterTouch
+      , pitchBend
+      ]
+        <?> "midi stream event"
+
 -- metadata parsers
 metaEvent :: Parser Event
 metaEvent =
@@ -352,10 +379,17 @@ sequencerSpecific :: Parser Event
 sequencerSpecific =
   SequencerSpecific <$> parseMetaInts 0x7F <?> "sequencer specific"
 
--- | JMW note complete
+-- | a SysEx within a file context
 sysEx :: Parser Event
 sysEx =
-  SysEx F0 <$> (map toCharCode <$> (bchoice 0xF0 0xF7 *> varInt >>= (\l -> count l anyChar))) <?> "system exclusive"
+  -- SysEx F0 <$> (map toCharCode <$> (bchoice 0xF0 0xF7 *> varInt >>= (\l -> count l anyChar))) <?> "system exclusive"
+  buildSysEx <$> bchoice 0xF0 0xF7 <*> (varInt >>= (\l -> count l anyChar)) <?> "system exclusive"
+
+-- | a SysEx within a stream context
+streamSysEx :: Parser Event
+streamSysEx =
+  buildStreamSysEx <$> bchoice 0xF0 0xF7 <*>
+    (many1Till notSysExEnd (char $ fromCharCode sysExTerminator))
 
 {- parse an unspecified meta event
    The possible range for the type is 00-7F. Not all values in this range are defined, but programs must be able
@@ -530,6 +564,21 @@ buildTimeSig nn dd cc bb =
   in
     TimeSignature nn denom cc bb
 
+-- | build a SysEx message for a stream-based SysEx event
+-- | this simply means appending the terminating 0xF7 to the data bytes
+buildStreamSysEx :: Int -> List Char -> Event
+buildStreamSysEx marker bytes =
+  buildSysEx marker (bytes <> (fromCharCode sysExTerminator : Nil))
+
+buildSysEx :: Int -> List Char -> Event
+buildSysEx marker bytes =
+  let
+    flavour = case marker of
+      0xF0 -> F0
+      _  ->   F7                    -- 0xF7
+  in
+    SysEx flavour (map toCharCode bytes)
+
 -- utility functions
 {- consume the overspill from a non-standard size chunk
    actual is the parsed actual chunk size followed by the chunk contents (which are returned)
@@ -545,19 +594,6 @@ consumeOverspill actual expected =
                     count (cnt - expected) int8
         )
 
-{-}
-topBitSet :: Int -> Boolean
-topBitSet n =
-  and n 0x80 > 0
-
-clearTopBit :: Int -> Int
-clearTopBit n =
-  and n 0x7F
-
-shiftLeftSeven :: Int -> Int
-shiftLeftSeven n =
-    n `shl` 7
--}
 
 makeTuple :: forall a b. a -> b -> Tuple a b
 makeTuple a b =
@@ -572,7 +608,8 @@ catChars = fold <<< map singleton
 -- | Parse a MIDI event
 parseMidiEvent :: String -> Either String Event
 parseMidiEvent s =
-  case runParser (midiEvent Nothing) s of
+  case runParser midiStreamEvent s of
+  --  case runParser (midiEvent Nothing) s of
     Right n ->
       Right n
 

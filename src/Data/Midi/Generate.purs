@@ -1,4 +1,4 @@
-module Data.Midi.Generate (event, recording, midiMessage) where
+module Data.Midi.Generate (Context(..), event, recording, midiMessage) where
 
 -- | Library for encoding MIDI types as "binary"
 -- | adapted from the elm-comidi version courtesy of @rhofour
@@ -10,14 +10,34 @@ import Data.Char (toCharCode)
 import Data.String (toCharArray)
 import Data.Midi
 
-event :: Event -> List Byte
-event evt =
+data Context =
+    File
+  | Stream
+
+event :: Context -> Event -> List Byte
+event ctx evt =
   case evt of
+    {-  stream version
     SysEx F0 bytes ->
       0xF0 : bytes
 
     SysEx F7 bytes ->
       bytes
+    -}
+    -- file version
+    SysEx F0 bytes ->
+      case ctx of
+        File ->
+         0xF0 : (varInt (length bytes)) <> bytes
+        _ ->
+         0xF0 : bytes
+
+    SysEx F7 bytes ->
+      case ctx of
+        File ->
+          (varInt (length bytes)) <> bytes
+        _ ->
+          bytes
 
     NoteOn channel note velocity ->
       ( 0x90 + channel : note : velocity : Nil )
@@ -98,9 +118,9 @@ track (Track t) =
 
 midiMessage :: Message -> List Byte
 midiMessage ( Message ticks ev ) =
-  (varInt ticks) <> (fileEvent ev)
+  (varInt ticks) <> (event File ev)
 
-
+{-
 fileEvent :: Event -> List Byte
 fileEvent e =
   case e of
@@ -112,7 +132,8 @@ fileEvent e =
 
     _ ->
       -- Use the regular event generator for everything else
-      event e
+      event File e
+-}
 
 
 

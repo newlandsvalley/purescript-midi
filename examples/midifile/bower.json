@@ -2,7 +2,7 @@
   "name": "midifile",
   "private": true,
   "dependencies": {
-    "purescript-midi": "https://github.com/newlandsvalley/purescript-midi.git#running-status",
+    "purescript-midi": "https://github.com/newlandsvalley/purescript-midi.git",
     "purescript-pux": "^9.1.0"
   }
 }

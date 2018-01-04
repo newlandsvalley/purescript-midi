@@ -2,7 +2,7 @@
   "name": "simplemidiplayer",
   "private": true,
   "dependencies": {
-    "purescript-midi": "https://github.com/newlandsvalley/purescript-midi.git#running-status",
+    "purescript-midi": "https://github.com/newlandsvalley/purescript-midi.git",
     "purescript-soundfonts": "https://github.com/newlandsvalley/purescript-soundfonts.git#1.1.3",
     "purescript-js-fileio": "https://github.com/newlandsvalley/purescript-js-fileio.git#1.0.2",
     "purescript-pux": "^12.0.0"

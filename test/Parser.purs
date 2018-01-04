@@ -1,22 +1,24 @@
 module Test.Parser (parserChecksSuite) where
 
 
-import Prelude (Unit, ($), (<$>), (<*>), bind, discard, map, pure)
-import Data.List (List, toUnfoldable)
-import Data.Either (Either(..))
-import Data.NonEmpty (NonEmpty, (:|))
-import Data.String (fromCharArray)
-import Data.Char (fromCharCode)
-import Control.Monad.Free (Free)
-import Control.Monad.Eff.Random (RANDOM)
-import Test.Unit (TestF, test, suite)
-import Test.QuickCheck.Arbitrary (class Arbitrary)
-import Test.QuickCheck (Result(), (===))
-import Test.Unit.QuickCheck (quickCheck)
-import Test.QuickCheck.Gen (Gen, chooseInt, listOf, oneOf)
 import Data.Midi
+
+import Control.Monad.Eff.Random (RANDOM)
+import Control.Monad.Free (Free)
+import Data.Array (singleton)
+import Data.Char (fromCharCode)
+import Data.Either (Either(..))
+import Data.List (List(..), (:), toUnfoldable)
 import Data.Midi.Generate as Generate
 import Data.Midi.Parser (parse, parseMidiEvent, parseMidiMessage)
+import Data.NonEmpty (NonEmpty, (:|))
+import Data.String (fromCharArray)
+import Prelude (Unit, ($), (<$>), (<*>), (<>), (+), bind, discard, map, pure)
+import Test.QuickCheck (Result, (===))
+import Test.QuickCheck.Arbitrary (class Arbitrary)
+import Test.QuickCheck.Gen (Gen, chooseInt, listOf, oneOf)
+import Test.Unit (TestF, test, suite)
+import Test.Unit.QuickCheck (quickCheck)
 
 -- | quickcheck-style tests adapted from the elm-comidi tests courtesy of @rhofour
 
@@ -26,17 +28,24 @@ import Data.Midi.Parser (parse, parseMidiEvent, parseMidiMessage)
 -- | requirement means that we have always to associate the type with the
 -- | instance in the same compilation unit.  We don't want to place it in
 -- | Data.Midi because it introduces an unnecessary dependency.
+
+-- | When tested in isolation, Events are always StreamEvents
+newtype TestStreamEvent = TestStreamEvent Event
+
+instance testStreamEventarb :: Arbitrary TestStreamEvent where
+  arbitrary = arbTestStreamEvent
+
+-- | we don't really need to expose Event (always embedded in a file)
+-- | unless we ever require to test file event parsing in isolation
 newtype TestEvent = TestEvent Event
 
 instance testEventarb :: Arbitrary TestEvent where
   arbitrary = arbTestEvent
 
-
 newtype TestMessage = TestMessage Message
 
 instance testMessagearb :: Arbitrary TestMessage where
   arbitrary = arbTestMessage
-
 
 newtype TestRecording = TestRecording Recording
 
@@ -79,6 +88,25 @@ arbControllerNumber = chooseInt 0 119
 arbDeltaTime :: Gen Int
 arbDeltaTime = chooseInt 0 0x0FFFFFFF
 
+arbSysExByte :: Gen Int
+arbSysExByte = chooseInt 0 127
+
+-- | the format of a SysEx event differs depending on
+-- whether it belongs to a stream or a file
+arbSysExBytes :: Generate.Context -> Gen (List Int)
+arbSysExBytes ctx =
+  do
+    count <- chooseInt 2 5
+    --  count <- chooseInt 2 127
+    bytes <- listOf count arbSysExByte
+    let
+      terminatedBytes =  (bytes <> (0xF7 : Nil))
+      countedBytes = (count + 1) : terminatedBytes
+    pure (case ctx of
+        Generate.File -> countedBytes
+        Generate.Stream -> terminatedBytes
+        )
+
 arbNoteOn :: Gen Event
 arbNoteOn =
   NoteOn <$> arbChannel <*> arbNote <*> arbPositiveVelocity
@@ -107,9 +135,13 @@ arbPitchBend :: Gen Event
 arbPitchBend =
   PitchBend <$> arbChannel <*> (chooseInt 0 16383)
 
-commonEvents :: NonEmpty Array (Gen Event)
-commonEvents =
-  arbNoteOn :|
+-- | we only handle the F0 flavour at the moment
+arbSysEx :: Generate.Context -> Gen Event
+arbSysEx ctx =
+    SysEx F0 <$> arbSysExBytes ctx
+
+commonEvents' :: Array (Gen Event)
+commonEvents' =
     [ arbNoteOn
     , arbNoteOff
     , arbNoteAfterTouch
@@ -118,14 +150,31 @@ commonEvents =
     , arbPitchBend
     ]
 
+commonEvents :: NonEmpty Array (Gen Event)
+commonEvents =
+  arbNoteOn :| commonEvents'
+
+allEvents :: NonEmpty Array (Gen Event)
+allEvents =
+  arbNoteOn :| (commonEvents' <> singleton (arbSysEx Generate.File))
+
+allStreamEvents :: NonEmpty Array (Gen Event)
+allStreamEvents =
+  arbNoteOn :| (commonEvents' <> singleton (arbSysEx Generate.Stream))
+
+-- | only necessary if we want to test file-based stream events in isolation
 arbTestEvent :: Gen TestEvent
 arbTestEvent =
-  TestEvent <$> oneOf commonEvents
+  TestEvent <$> oneOf allEvents
+
+arbTestStreamEvent :: Gen TestStreamEvent
+arbTestStreamEvent =
+  TestStreamEvent <$> oneOf allStreamEvents
 
 arbMessage :: Gen Message
 arbMessage =
-  (Message <$>
-     arbDeltaTime <*> (oneOf commonEvents))
+  Message <$>
+    arbDeltaTime <*> (oneOf commonEvents)
 
 arbTestMessage :: Gen TestMessage
 arbTestMessage =
@@ -133,7 +182,9 @@ arbTestMessage =
 
 arbTrack :: Gen Track
 arbTrack =
-  Track <$> listOf 20 arbMessage
+  do
+    count <- chooseInt 0 250
+    Track <$> listOf count arbMessage
 
 arbTracks :: Int -> Gen (List Track)
 arbTracks trackCount =
@@ -174,10 +225,10 @@ toByteString list =
 
 -- | the test properties
 
-roundTripEventProperty :: TestEvent -> Result
-roundTripEventProperty (TestEvent e) =
+roundTripStreamEventProperty :: TestStreamEvent -> Result
+roundTripStreamEventProperty (TestStreamEvent e) =
   let
-    event = parseMidiEvent $ toByteString $ Generate.event e
+    event = parseMidiEvent $ toByteString $ Generate.event Generate.Stream e
   in
     (Right e :: Either String Event) === event
 
@@ -199,8 +250,8 @@ roundTripRecordingProperty (TestRecording r) =
 parserChecksSuite :: forall t. Free (TestF (random :: RANDOM | t)) Unit
 parserChecksSuite = do
   suite "parser" do
-    test "round trip event" do
-      quickCheck roundTripEventProperty
+    test "round trip (stream) event" do
+      quickCheck roundTripStreamEventProperty
     test "round trip message" do
       quickCheck roundTripMessageProperty
     test "round trip recording" do
