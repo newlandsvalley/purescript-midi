@@ -112,8 +112,8 @@ notSysExEnd =
   noneOf [ fromCharCode sysExTerminator ]
 
 -- fixed length integers
-int16 :: Parser Int
-int16 =
+uint16 :: Parser Int
+uint16 =
   let
     toInt16 a b =
       a `shl` 8 + b
@@ -121,16 +121,16 @@ int16 =
     toInt16 <$> int8 <*> int8
 
 
-int24 :: Parser Int
-int24 =
+uint24 :: Parser Int
+uint24 =
   let
     toInt24 a b c =
       a `shl` 16 + b `shl` 8 + c
   in
     toInt24 <$> int8 <*> int8 <*> int8
 
-int32 :: Parser Int
-int32 =
+uint32 :: Parser Int
+uint32 =
   let
     toInt32 a b c d =
       a `shl` 24 + b `shl` 16 + c `shl` 8 + d
@@ -187,7 +187,7 @@ midi =
 {- simple parser for headers which assumes chunk size is 6
    midiHeader : Parser Header
    midiHeader = string "MThd"
-                  *> int32
+                  *> uint32
                   *> ( Header <$>  int16 <*> int16 <*> int16 )
                   <?> "header"
 -}
@@ -199,7 +199,7 @@ midiHeader =
   string "MThd"
     *> let
          h =
-            headerChunk <$> int32 <*> int16 <*> int16 <*> int16
+            headerChunk <$> uint32 <*> uint16 <*> uint16 <*> uint16
        in
          consumeOverspill h 6
             <?> "header"
@@ -212,8 +212,8 @@ midiTracks (Header h) =
 midiTrack :: Parser Track
 midiTrack =
   Track <$>
-     -- (string "MTrk" *> int32 *> many1Till midiMessage trackEndMessage <?> "midi track")
-     (string "MTrk" *> int32 *> midiMessages Nothing <?> "midi track")
+     -- (string "MTrk" *> uint32 *> many1Till midiMessage trackEndMessage <?> "midi track")
+     (string "MTrk" *> uint32 *> midiMessages Nothing <?> "midi track")
 
 midiMessages :: Maybe Event -> Parser (List Message)
 midiMessages parent =
@@ -310,7 +310,7 @@ metaEvent =
 
 sequenceNumber :: Parser Event
 sequenceNumber =
-  SequenceNumber <$> (bchar 0x00 *> bchar 0x02 *> int16 <?> "sequence number")
+  SequenceNumber <$> (bchar 0x00 *> bchar 0x02 *> uint16 <?> "sequence number")
 
 {- parse a simple string-valued meta event -}
 parseMetaString :: Int -> Parser String
@@ -361,7 +361,7 @@ channelPrefix =
 
 tempoChange :: Parser Event
 tempoChange =
-  Tempo <$> (bchar 0x51 *> bchar 0x03 *> int24) <?> "tempo change"
+  Tempo <$> (bchar 0x51 *> bchar 0x03 *> uint24) <?> "tempo change"
 
 smpteOffset :: Parser Event
 smpteOffset =
@@ -567,13 +567,13 @@ buildTimeSig nn dd cc bb =
 -- | build a SysEx message for a stream-based SysEx event
 -- | this simply means appending the terminating 0xF7 to the data bytes
 buildStreamSysEx :: Int -> List Char -> Event
-buildStreamSysEx marker bytes =
-  buildSysEx marker (bytes <> (fromCharCode sysExTerminator : Nil))
+buildStreamSysEx sysExType bytes =
+  buildSysEx sysExType (bytes <> (fromCharCode sysExTerminator : Nil))
 
 buildSysEx :: Int -> List Char -> Event
-buildSysEx marker bytes =
+buildSysEx sysExType bytes =
   let
-    flavour = case marker of
+    flavour = case sysExType of
       0xF0 -> F0
       _  ->   F7                    -- 0xF7
   in

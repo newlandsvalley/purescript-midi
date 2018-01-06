@@ -3,11 +3,11 @@ module Data.Midi.Generate (Context(..), event, recording, midiMessage) where
 -- | Library for encoding MIDI types as "binary"
 -- | adapted from the elm-comidi version courtesy of @rhofour
 
-import Prelude ((<>), (+), (<), (<<<), map)
+import Prelude (($), (<>), (+), (<), (<<<), map)
 import Data.Int.Bits (shr, and)
 import Data.List (List(..), (:), concat, concatMap, fromFoldable, length)
 import Data.Char (toCharCode)
-import Data.String (toCharArray)
+import Data.String (length, toCharArray) as Str
 import Data.Midi
 
 data Context =
@@ -32,13 +32,15 @@ event ctx evt =
         _ ->
          0xF0 : bytes
 
+    -- this is still not entirely clear
     SysEx F7 bytes ->
       case ctx of
         File ->
-          (varInt (length bytes)) <> bytes
+          0xF7 : (varInt (length bytes)) <> bytes
         _ ->
-          bytes
+          0xF7 : bytes
 
+    -- channel events
     NoteOn channel note velocity ->
       ( 0x90 + channel : note : velocity : Nil )
 
@@ -66,6 +68,35 @@ event ctx evt =
           shr bend 7
       in
         ( 0xE0 + channel : lower : upper : Nil)
+
+    -- meta events
+    SequenceNumber seq ->
+       ( 0xFF : 0x00 : 0x02 : uint16 seq )
+
+    Text text ->
+      ( 0xFF : 0x01 : vstrToBytes text)
+
+    Copyright text ->
+      ( 0xFF : 0x02 : vstrToBytes text)
+
+    TrackName text ->
+      ( 0xFF : 0x03 : vstrToBytes text)
+
+    InstrumentName text ->
+      ( 0xFF : 0x04 : vstrToBytes text)
+
+    Lyrics text ->
+      ( 0xFF : 0x05 : vstrToBytes text)
+
+    Marker text ->
+      ( 0xFF : 0x06 : vstrToBytes text)
+
+    CuePoint text ->
+      ( 0xFF : 0x07 : vstrToBytes text)
+
+    Tempo t ->
+      ( 0xFF : 0x51 : 0x03 : uint24 t)
+
 
     _ ->
       Nil
@@ -139,9 +170,15 @@ fileEvent e =
 
 -- Helper functions
 
+-- fixed length strings
 strToBytes :: String -> List Byte
 strToBytes =
-  (map toCharCode) <<< fromFoldable <<< toCharArray
+  (map toCharCode) <<< fromFoldable <<< Str.toCharArray
+
+-- variable length strings
+vstrToBytes :: String -> List Byte
+vstrToBytes s =
+  (varInt $ Str.length s) <> (strToBytes s)
 
 
 uint16 :: Int -> List Byte
@@ -155,6 +192,19 @@ uint16 x =
   in
     ( b1 : b2 : Nil )
 
+uint24 :: Int -> List Byte
+uint24 x =
+  let
+    b1 =
+      and 255 (shr x 16)
+
+    b2 =
+      and 255 (shr x 8)
+
+    b3 =
+      and 255 x
+  in
+    ( b1 :  b2 :  b3 :  Nil )
 
 uint32 :: Int -> List Byte
 uint32 x =
