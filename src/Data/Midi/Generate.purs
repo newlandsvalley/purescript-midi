@@ -97,6 +97,21 @@ event ctx evt =
     Tempo t ->
       ( 0xFF : 0x51 : 0x03 : uint24 t)
 
+    SMPTEOffset hr mn se fr ff ->
+      ( 0xFF : 0x54 : 0x03 : hr : mn : se : fr : ff : Nil)
+
+    TimeSignature nn dd cc bb ->
+      ( 0xFF : 0x58 : 0x04 : nn : dd : cc : bb : Nil)
+
+    KeySignature sf mi ->
+      ( 0xFF : 0x59 : 0x02 : sf : mi : Nil)
+
+    SequencerSpecific bytes ->
+      ( 0xFF : 0x7F : vBytes bytes)
+
+    -- not really to be used other than in testing
+    Unspecified code bytes ->
+      ( 0xFF : code : vBytes bytes)  
 
     _ ->
       Nil
@@ -179,6 +194,16 @@ strToBytes =
 vstrToBytes :: String -> List Byte
 vstrToBytes s =
   (varInt $ Str.length s) <> (strToBytes s)
+
+vBytes :: List Byte -> List Byte
+vBytes bytes =
+  (varInt $ length bytes) <> bytes
+
+{-}
+signedInt8 : Int -> Byte
+signedInt8 x =
+  if (x )
+-}
 
 
 uint16 :: Int -> List Byte

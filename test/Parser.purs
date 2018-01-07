@@ -145,7 +145,8 @@ arbSysExBytes ctx =
 arbBytes :: Gen (List Int)
 arbBytes =
   do
-    count <- chooseInt 1 256
+    count <- chooseInt 1 5
+    --  count <- chooseInt 1 256
     listOf count arbByte
 
 -- arbitrary channel events
@@ -239,12 +240,18 @@ arbTimeSignature =
   TimeSignature
     <$>  (chooseInt 1 100)  -- numerator
     <*>  (chooseInt 0 10)   -- denominator
+    -- <*>  elements (1 :| [1,2,4,8,16,32,64,128,256 ])
     <*>  (pure 24)          -- clock count
     <*>  (chooseInt 1 64)   -- 32nd notes per quarter note
 
 arbSequencerSpecific  :: Gen Event
 arbSequencerSpecific =
   SequencerSpecific <$> arbBytes
+
+-- tiny example - needs expanding
+arbUnspecified :: Gen Event
+arbUnspecified =
+  Unspecified <$> (pure 0x60) <*> arbBytes
 
 
 channelEvents :: Array (Gen Event)
@@ -268,6 +275,10 @@ metaEvents =
   , arbMarker
   , arbCuePoint
   , arbTempo
+  , arbSMPTEOffset
+  -- , arbTimeSignature
+  , arbSequencerSpecific
+  , arbUnspecified
   ]
 
 commonEvents :: NonEmpty Array (Gen Event)

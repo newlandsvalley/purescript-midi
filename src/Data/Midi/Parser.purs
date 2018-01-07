@@ -392,14 +392,23 @@ streamSysEx =
     (many1Till notSysExEnd (char $ fromCharCode sysExTerminator))
 
 {- parse an unspecified meta event
-   The possible range for the type is 00-7F. Not all values in this range are defined, but programs must be able
-   to cope with (ie ignore) unexpected values by examining the length and skipping over the data portion.
+
+   The possible range for an event type is 00-7F. Not all values in this range are
+   defined, but programs must be able to cope with (ie ignore) unexpected values
+   by examining the length and skipping over the data portion.
+
+   I can no longer find the reference in the spec for recovering after an
+   unspecified event message is received.  Currently, this parser will recover
+   if it receives an unspecified meta event message composed of a byte array
+   which is prefaced by a varInt.
+
    We cope by accepting any value here except TrackEnd which is the terminating condition for the list of MidiEvents
    and so must not be recognized here
 -}
 unspecified :: Parser Event
 unspecified =
-  Unspecified <$> notTrackEnd <*> (int8 >>= (\l -> count l int8))
+  Unspecified <$> notTrackEnd <*> (varInt >>= (\l -> count l int8))
+  --  Unspecified <$> notTrackEnd <*> (int8 >>= (\l -> count l int8))
 
 trackEndMessage :: Parser Unit
 trackEndMessage =
@@ -560,7 +569,8 @@ buildTimeSig :: Int -> Int -> Int -> Int -> Event
 buildTimeSig nn dd cc bb =
   let
     denom =
-      2 `pow` dd
+      -- 2 `pow` dd
+      dd -- JMW experiment
   in
     TimeSignature nn denom cc bb
 
