@@ -12,7 +12,6 @@
     "purescript-lists": "^4.8.0",
     "purescript-string-parsers": "^3.0.1",
     "purescript-integers": "^3.1.0",
-    "purescript-debug": "^3.0.0",
     "purescript-unicode": "^3.0.1",
     "purescript-generics-rep": "^5.1.0",
     "purescript-signal": "^9.0.0"
