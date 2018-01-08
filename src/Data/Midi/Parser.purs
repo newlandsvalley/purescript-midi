@@ -562,15 +562,13 @@ buildChannelAfterTouch cmd num =
 buildPitchBend :: Int -> Int -> Int -> Event
 buildPitchBend cmd lsb msb =
   channelBuilder2 PitchBend cmd $ lsb + (shl msb 7)
-  --  channelBuilder2 PitchBend cmd $ lsb + shiftLeftSeven msb
 
 {- build a Time Signature -}
 buildTimeSig :: Int -> Int -> Int -> Int -> Event
 buildTimeSig nn dd cc bb =
   let
     denom =
-      -- 2 `pow` dd
-      dd -- JMW experiment
+      2 `pow` dd
   in
     TimeSignature nn denom cc bb
 

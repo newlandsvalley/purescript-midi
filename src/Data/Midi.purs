@@ -47,6 +47,8 @@ instance ordSysExFlavour :: Ord SysExFlavour where
 -- |
 -- | Note that RunningStatus messages are not included within Event
 -- | because the parser translates them to the underlying channel messages
+-- |
+-- | For TimeSignature a b c d, the basic signature is a/b (for example 3/4)
 data Event
     = -- meta messages
       SequenceNumber Int
@@ -63,6 +65,7 @@ data Event
     | TimeSignature Int Int Int Int
     | KeySignature Int Int
     | SequencerSpecific (List Byte)
+      -- system exclusive message
     | SysEx SysExFlavour (List Byte)
     | Unspecified Int (List Byte)
       -- channel messages

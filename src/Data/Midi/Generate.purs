@@ -3,12 +3,13 @@ module Data.Midi.Generate (Context(..), event, recording, midiMessage) where
 -- | Library for encoding MIDI types as "binary"
 -- | adapted from the elm-comidi version courtesy of @rhofour
 
-import Prelude (($), (<>), (+), (<), (<<<), map)
+import Data.Midi
+
+import Data.Char (toCharCode)
 import Data.Int.Bits (shr, and)
 import Data.List (List(..), (:), concat, concatMap, fromFoldable, length)
-import Data.Char (toCharCode)
 import Data.String (length, toCharArray) as Str
-import Data.Midi
+import Prelude (map, ($), (+), (<), (<<<), (<=), (<>))
 
 data Context =
     File
@@ -101,17 +102,17 @@ event ctx evt =
       ( 0xFF : 0x54 : 0x03 : hr : mn : se : fr : ff : Nil)
 
     TimeSignature nn dd cc bb ->
-      ( 0xFF : 0x58 : 0x04 : nn : dd : cc : bb : Nil)
+      ( 0xFF : 0x58 : 0x04 : nn : (pseudoLog dd) : cc : bb : Nil)
 
     KeySignature sf mi ->
-      ( 0xFF : 0x59 : 0x02 : sf : mi : Nil)
+      ( 0xFF : 0x59 : 0x02 : (signedInt8 sf) : mi : Nil)
 
     SequencerSpecific bytes ->
       ( 0xFF : 0x7F : vBytes bytes)
 
     -- not really to be used other than in testing
     Unspecified code bytes ->
-      ( 0xFF : code : vBytes bytes)  
+      ( 0xFF : code : vBytes bytes)
 
     _ ->
       Nil
@@ -199,13 +200,6 @@ vBytes :: List Byte -> List Byte
 vBytes bytes =
   (varInt $ length bytes) <> bytes
 
-{-}
-signedInt8 : Int -> Byte
-signedInt8 x =
-  if (x )
--}
-
-
 uint16 :: Int -> List Byte
 uint16 x =
   let
@@ -248,6 +242,9 @@ uint32 x =
   in
     ( b1 :  b2 :  b3 :  b4 : Nil )
 
+signedInt8 :: Int -> Int
+signedInt8 x =
+  and 255 x
 
 varInt :: Int -> List Byte
 varInt x =
@@ -264,3 +261,19 @@ varInt x =
       x : Nil
     else
       varIntHelper (shr x 7) ( and 127 x : Nil )
+
+-- | this messy little routine is intended to convert 2^n to n
+-- | for 0 <= n <= 7
+-- | i.e. convert a time signature (e.g. the 4 in 3/4) to a power of 2
+-- | I want to avoid the dependency on purescript-decimals which has an
+-- | awkward transitive dependency on decimal.js
+pseudoLog :: Int -> Int
+pseudoLog x =
+  if (x <= 1) then 0
+  else if (x <= 2) then 1
+  else if (x <= 4) then 2
+  else if (x <= 8) then 3
+  else if (x <= 16) then 4
+  else if (x <= 32) then 5
+  else if (x <= 64) then 6
+  else 7

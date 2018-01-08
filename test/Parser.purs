@@ -8,7 +8,8 @@ import Control.Monad.Free (Free)
 import Data.Array (singleton)
 import Data.Char (fromCharCode)
 import Data.Either (Either(..))
-import Data.List (List(..), (:), toUnfoldable)
+import Data.List (List(..), (:), fromFoldable, toUnfoldable)
+import Data.Tuple (Tuple(..))
 import Data.Midi.Generate as Generate
 import Data.Midi.Parser (parse, parseMidiEvent, parseMidiMessage)
 import Data.NonEmpty (NonEmpty, (:|))
@@ -16,7 +17,7 @@ import Data.String (fromCharArray)
 import Prelude (Unit, ($), (<$>), (<*>), (<>), (+), bind, discard, map, negate, pure)
 import Test.QuickCheck (Result, (===))
 import Test.QuickCheck.Arbitrary (class Arbitrary, arbitrary)
-import Test.QuickCheck.Gen (Gen, chooseInt, elements, listOf, oneOf)
+import Test.QuickCheck.Gen (Gen, chooseInt, elements, frequency, listOf, oneOf)
 import Test.Unit (TestF, test, suite)
 import Test.Unit.QuickCheck (quickCheck)
 
@@ -145,8 +146,8 @@ arbSysExBytes ctx =
 arbBytes :: Gen (List Int)
 arbBytes =
   do
-    count <- chooseInt 1 5
-    --  count <- chooseInt 1 256
+    -- count <- chooseInt 1 5
+    count <- chooseInt 1 256
     listOf count arbByte
 
 -- arbitrary channel events
@@ -239,8 +240,7 @@ arbTimeSignature :: Gen Event
 arbTimeSignature =
   TimeSignature
     <$>  (chooseInt 1 100)  -- numerator
-    <*>  (chooseInt 0 10)   -- denominator
-    -- <*>  elements (1 :| [1,2,4,8,16,32,64,128,256 ])
+    <*>  elements (4 :| [1,2,4,8,16,32,64,128 ]) -- denominator
     <*>  (pure 24)          -- clock count
     <*>  (chooseInt 1 64)   -- 32nd notes per quarter note
 
@@ -264,6 +264,18 @@ channelEvents =
     , arbPitchBend
     ]
 
+weightedChannelEvents :: List (Tuple Number (Gen Event))
+weightedChannelEvents =
+    ( Tuple 200.0 arbNoteOn
+    : Tuple 200.0 arbNoteOff
+    : Tuple 10.0 arbNoteAfterTouch
+    : Tuple 10.0 arbControlChange
+    : Tuple 5.0 arbProgramChange
+    : Tuple 5.0 arbPitchBend
+    : Nil
+    )
+
+
 metaEvents :: Array (Gen Event)
 metaEvents =
   [ arbSequenceNumber
@@ -276,36 +288,53 @@ metaEvents =
   , arbCuePoint
   , arbTempo
   , arbSMPTEOffset
-  -- , arbTimeSignature
+  , arbTimeSignature
+  , arbKeySignature
   , arbSequencerSpecific
   , arbUnspecified
   ]
+
+
+weightedMetaEvents :: List (Tuple Number (Gen Event))
+weightedMetaEvents =
+  fromFoldable $ map (Tuple 1.0) metaEvents
+
+weightedSysExEvent :: Generate.Context -> Tuple Number (Gen Event)
+weightedSysExEvent ctx =
+  Tuple 20.0 $ arbSysEx ctx
 
 commonEvents :: NonEmpty Array (Gen Event)
 commonEvents =
   arbNoteOn :| channelEvents
 
-allEvents :: NonEmpty Array (Gen Event)
-allEvents =
-  arbNoteOn :| (channelEvents <> singleton (arbSysEx Generate.File) <> metaEvents)
+allEvents :: Generate.Context -> NonEmpty Array (Gen Event)
+allEvents ctx =
+  arbNoteOn :| (channelEvents <> singleton (arbSysEx ctx) <> metaEvents)
 
-allStreamEvents :: NonEmpty Array (Gen Event)
-allStreamEvents =
-  arbNoteOn :| (channelEvents <> singleton (arbSysEx Generate.Stream) <> metaEvents)
+weightedEvents :: Generate.Context -> NonEmpty List (Tuple Number (Gen Event))
+weightedEvents ctx =
+  (Tuple 1.0 arbNoteOn)
+     :|
+       ( weightedChannelEvents
+         <> ( (weightedSysExEvent ctx) : Nil)
+         <> weightedMetaEvents
+        )
 
 -- | only necessary if we want to test file-based stream events in isolation
 arbTestEvent :: Gen TestEvent
 arbTestEvent =
-  TestEvent <$> oneOf allEvents
+  TestEvent <$> oneOf (allEvents Generate.File)
 
 arbTestStreamEvent :: Gen TestStreamEvent
 arbTestStreamEvent =
-  TestStreamEvent <$> oneOf allStreamEvents
+  TestStreamEvent <$> frequency (weightedEvents Generate.Stream)
+  -- TestStreamEvent <$> oneOf (allEvents Generate.Stream)
 
 arbMessage :: Gen Message
 arbMessage =
   Message <$>
-    arbDeltaTime <*> (oneOf allEvents)
+    arbDeltaTime <*> frequency (weightedEvents Generate.File)
+    --  arbDeltaTime <*> (oneOf allEvents)
 
 arbTestMessage :: Gen TestMessage
 arbTestMessage =
