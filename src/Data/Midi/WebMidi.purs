@@ -1,3 +1,5 @@
+-- | This module provides plug and play support for MIDI input devices such as
+-- | MIDI keyboards.
 module Data.Midi.WebMidi
   ( WEBMIDI
   , RawMidiEvent
@@ -18,13 +20,13 @@ import Data.Midi.Parser (parseMidiEvent)
 import Signal.Channel (CHANNEL, Channel, channel, send)
 import Signal
 
--- | A 'raw' Midi Event
+-- | A 'raw' Midi Event where the event has not been decoded.
 type RawMidiEvent =
  { timeStamp :: Number
  , encodedBinary :: String
  }
 
--- | A Midi Device
+-- | A Midi Device.
 type Device =
  { connected :: Boolean
  , portType :: String
@@ -34,10 +36,10 @@ type Device =
  , version :: String
 }
 
--- | WEBMIDI Effect
+-- | The WEBMIDI Effect.
 foreign import data WEBMIDI :: Effect
 
--- | listen to 'raw' web-MIDI event messages
+-- | listen to 'raw' web-MIDI event messages.
 foreign import listen :: forall e. (RawMidiEvent -> Eff e Unit) -> Eff e Unit
 
 -- | detect any input device as it connects or disconnects
@@ -47,8 +49,7 @@ foreign import detectInputDevices :: forall e. (Device -> Eff e Unit) -> Eff e U
 foreign import webMidiConnect
   :: forall eff. (Eff (wm :: WEBMIDI | eff) Boolean)
 
--- | convert a Raw MIDI event to a comprehensible one
--- | by parsing the binary event
+-- | convert a raw MIDI event to a comprehensible one by parsing the binary event.
 timedMidiEvent :: RawMidiEvent -> Midi.TimedEvent
 timedMidiEvent rme =
   case parseMidiEvent rme.encodedBinary of

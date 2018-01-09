@@ -1,3 +1,4 @@
+-- | Data structures used by the MIDI parser and by Web MIDI.
 module Data.Midi
         ( Track(..)
         , Header(..)
@@ -21,16 +22,28 @@ import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Ord (genericCompare)
 import Data.Generic.Rep.Show (genericShow)
 
+-- | A Tick represents a MIDI time increment.  See the MIDI Specification,
+-- | page 135 - delta-time.
 type Ticks = Int
 
+-- | A MIDI byte (for use in a Byte array) and represented as an Int.
 type Byte = Int
 
+-- | A MIDI Channel in the range ( 0 <= channel <= 15).
+-- | See the MIDI specification - page 7.
 type Channel = Int
 
+-- | A MIDI note number representing a pitch in the range (0 <= note <= 127).
+-- | See the MIDI specification page 42 - Note Number.
+-- | 0 in a NoteOn message is equivalent to NoteOff.
 type Note = Int
 
+-- | An indication of the pressure applied to a key on a MIDI isntrument and
+-- | hence of note volume. See the MIDI specification page 42 - Volume.
 type Velocity = Int
 
+-- | System exclusive messages exist in two different flavours as introduced by
+-- | a lead-in byte of 0xF0 or 0xF7.  See the MIDI specification page 135.
 data SysExFlavour
     = F0 -- normal
     | F7 -- escaped
@@ -43,12 +56,10 @@ instance eqSysExFlavour :: Eq SysExFlavour where
 instance ordSysExFlavour :: Ord SysExFlavour where
   compare = genericCompare
 
--- |  Midi Event
+-- | A Midi Event.
 -- |
 -- | Note that RunningStatus messages are not included within Event
 -- | because the parser translates them to the underlying channel messages
--- |
--- | For TimeSignature a b c d, the basic signature is a/b (for example 3/4)
 data Event
     = -- meta messages
       SequenceNumber Int
@@ -85,7 +96,7 @@ instance eqEvent :: Eq Event where
 instance ordEvent :: Ord Event where
   compare = genericCompare
 
--- | a timestamped parsed MIDI Event message
+-- | a timestamped parsed MIDI Event message for use with Web MIDI
 newtype TimedEvent = TimedEvent {
     timeStamp :: Number
   , event     :: Maybe Event
@@ -96,7 +107,7 @@ derive instance genericTimedEvent:: Generic TimedEvent _
 instance showTimedEvent :: Show TimedEvent where
   show = genericShow
 
--- | Midi Message
+-- | A MIDI Message.
 data Message = Message Ticks Event
 
 derive instance genericMessage :: Generic Message _
@@ -107,7 +118,7 @@ instance eqMessage :: Eq Message where
 instance ordMessage :: Ord Message where
   compare = genericCompare
 
--- | Midi Track
+-- | A Midi Track.
 data Track = Track
   (List Message)
 
@@ -123,7 +134,7 @@ instance ordTrack :: Ord Track where
   compare = genericCompare
 
 
--- | Midi Header
+-- | The Midi Header.
 data Header = Header
     { formatType :: Int
     , trackCount :: Int
@@ -141,7 +152,7 @@ instance eqHeader :: Eq Header where
 instance ordHeader :: Ord Header where
   compare = genericCompare
 
--- | Midi Recording
+-- | A Midi Recording.
 data Recording = Recording
     { header :: Header
     , tracks :: List Track

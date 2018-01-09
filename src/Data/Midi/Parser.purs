@@ -1,3 +1,4 @@
+-- | A parser for MIDI recordings or for MIDI event streams
 module Data.Midi.Parser
         ( normalise
         , parse
@@ -49,20 +50,20 @@ sysExTerminator = 0xF7
 
 -- low level parsers
 
--- | Apply a parser and skip its result.
+-- Apply a parser and skip its result.
 skip :: forall a. Parser a -> Parser Unit
 skip = void
 
--- | Parse `n` occurences of `p`. -
+-- Parse `n` occurences of `p`. -
 count :: forall a. Int -> Parser a -> Parser (List a)
 count = replicateA
 
-{- parse a binary 8 bit integer -}
+-- parse a binary 8 bit integer
 int8 :: Parser Int
 int8 =
   toCharCode <$> anyChar
 
-{- parse a signed binary 8 bit integer -}
+-- parse a signed binary 8 bit integer
 signedInt8 :: Parser Int
 signedInt8 =
   (\i ->
@@ -84,12 +85,12 @@ signedInt8 =
     <$> int8
 -}
 
-{- parse a specific binary 8 bit integer -}
+-- parse a specific binary 8 bit integer
 bchar :: Int -> Parser Int
 bchar val =
   toCharCode <$> char (fromCharCode (val))
 
-{- parse an 8 bit integer lying within a range -}
+-- parse an 8 bit integer lying within a range
 brange :: Int -> Int -> Parser Int
 brange l r =
   let
@@ -98,7 +99,7 @@ brange l r =
   in
     toCharCode <$> satisfy f
 
-{- parse a choice between a pair of 8 bit integers -}
+-- parse a choice between a pair of 8 bit integers
 bchoice :: Int -> Int -> Parser Int
 bchoice x y =
   bchar x <|> bchar y
@@ -165,13 +166,14 @@ varInt =
         )
 -}
 
-{- just for debug purposes - consume the rest of the input -}
+-- just for debug purposes - consume the rest of the input
 rest :: Parser (List Char)
 rest =
   many anyChar
 
 -- top level parsers
 
+-- a MIDI recording
 midi :: Parser Recording
 midi =
   midiHeader >>= midiTracks
@@ -247,8 +249,8 @@ midiMessage parent =
     <*> midiEvent parent
     <?> "midi message"
 
--- | we need to pass the parent event to running status events in order to
--- | make sense of them.
+-- we need to pass the parent event to running status events in order to
+-- make sense of them.
 midiEvent :: Maybe Event -> Parser Event
 midiEvent parent =
   -- traceEvent <$>
@@ -266,9 +268,9 @@ midiEvent parent =
       ]
         <?> "midi event"
 
--- | stream events from web-MIDI streams differ from file events in that:
--- |   * running status is not supported
--- |   * SysEx messages do not preface the bytes with a length
+-- stream events from web-MIDI streams differ from file events in that:
+--   * running status is not supported
+--   * SysEx messages do not preface the bytes with a length
 midiStreamEvent :: Parser Event
 midiStreamEvent =
   -- traceEvent <$>
@@ -312,14 +314,14 @@ sequenceNumber :: Parser Event
 sequenceNumber =
   SequenceNumber <$> (bchar 0x00 *> bchar 0x02 *> uint16 <?> "sequence number")
 
-{- parse a simple string-valued meta event -}
+-- parse a simple string-valued meta event
 parseMetaString :: Int -> Parser String
 parseMetaString target =
   catChars
     <$>
       (bchar target *> varInt >>= (\l -> count l anyChar))
 
-{- parse a simple meta event as a List of Ints -}
+-- parse a simple meta event as a List of Ints
 parseMetaInts :: Int -> Parser (List Int)
 parseMetaInts target =
   (map toCharCode)
@@ -379,13 +381,13 @@ sequencerSpecific :: Parser Event
 sequencerSpecific =
   SequencerSpecific <$> parseMetaInts 0x7F <?> "sequencer specific"
 
--- | a SysEx within a file context
+-- a SysEx within a file context
 sysEx :: Parser Event
 sysEx =
   -- SysEx F0 <$> (map toCharCode <$> (bchoice 0xF0 0xF7 *> varInt >>= (\l -> count l anyChar))) <?> "system exclusive"
   buildSysEx <$> bchoice 0xF0 0xF7 <*> (varInt >>= (\l -> count l anyChar)) <?> "system exclusive"
 
--- | a SysEx within a stream context
+-- a SysEx within a stream context
 streamSysEx :: Parser Event
 streamSysEx =
   buildStreamSysEx <$> bchoice 0xF0 0xF7 <*>
@@ -445,10 +447,10 @@ pitchBend :: Parser Event
 pitchBend =
   buildPitchBend <$> brange 0xE0 0xEF <*> int8 <*> int8 <?> "pitch bend"
 
--- | running status is somewhat anomalous.  It inherits the 'type' of the last event parsed,
--- | (here called the parent) which must be a channel event.
--- | We now macro-expand the running status message to be the type (and use the channel status)
--- | of the parent.  If the parent is missing or is not a channel event, we fail the parse
+-- running status is somewhat anomalous.  It inherits the 'type' of the last event parsed,
+-- (here called the parent) which must be a channel event.
+-- We now macro-expand the running status message to be the type (and use the channel status)
+-- of the parent.  If the parent is missing or is not a channel event, we fail the parse
 runningStatus :: Maybe Event -> Parser Event
 runningStatus parent =
     -- RunningStatus <$> brange 0x00 0x7F <*> int8 <?> "running status"
@@ -481,9 +483,8 @@ runningStatus parent =
             fail "no parent for running status"
 
 
-{- build a Header and make the chunk length available so that any overspill bytes can
-   later be quietly ignored
--}
+-- build a Header and make the chunk length available so that any overspill bytes
+-- can later be quietly ignored
 headerChunk :: Int -> Int -> Int -> Int -> Tuple Int Header
 headerChunk l a b c =
   let
@@ -499,7 +500,7 @@ buildRecording :: Header -> List Track -> Recording
 buildRecording h ts =
   Recording { header: h, tracks : ts }
 
-{- build NoteOn (unless the velocity is zero in which case NoteOff) -}
+-- build NoteOn (unless the velocity is zero in which case NoteOff)
 buildNote :: Int -> Int -> Int -> Event
 buildNote cmd note velocity =
   let
@@ -516,7 +517,7 @@ buildNote cmd note velocity =
       _ ->
         NoteOn channel note velocity
 
-{- abstract builders that construct MidiEvents that all have the same shape -}
+-- abstract builders that construct MidiEvents that all have the same shape
 channelBuilder3 :: (Int -> Int -> Int -> Event) -> Int -> Int -> Int -> Event
 channelBuilder3 construct cmd x y =
   let
@@ -533,37 +534,37 @@ channelBuilder2 construct cmd x =
   in
     construct channel x
 
-{- build NoteOff -}
+-- build NoteOff
 buildNoteOff :: Int -> Int -> Int -> Event
 buildNoteOff cmd note velocity =
   channelBuilder3 NoteOff cmd note velocity
 
-{- build Note AfterTouch AKA Polyphonic Key Pressure -}
+-- build Note AfterTouch AKA Polyphonic Key Pressure
 buildNoteAfterTouch :: Int -> Int -> Int -> Event
 buildNoteAfterTouch cmd note pressure =
   channelBuilder3 NoteAfterTouch cmd note pressure
 
-{- build Control Change -}
+-- build Control Change
 buildControlChange :: Int -> Int -> Int -> Event
 buildControlChange cmd num value =
   channelBuilder3 ControlChange cmd num value
 
-{- build Program Change -}
+-- build Program Change
 buildProgramChange :: Int -> Int -> Event
 buildProgramChange cmd num =
   channelBuilder2 ProgramChange cmd num
 
-{- build Channel AfterTouch AKA Channel Key Pressure -}
+-- build Channel AfterTouch AKA Channel Key Pressure
 buildChannelAfterTouch :: Int -> Int -> Event
 buildChannelAfterTouch cmd num =
   channelBuilder2 ChannelAfterTouch cmd num
 
-{- build Pitch Bend -}
+-- build Pitch Bend
 buildPitchBend :: Int -> Int -> Int -> Event
 buildPitchBend cmd lsb msb =
   channelBuilder2 PitchBend cmd $ lsb + (shl msb 7)
 
-{- build a Time Signature -}
+-- build a Time Signature
 buildTimeSig :: Int -> Int -> Int -> Int -> Event
 buildTimeSig nn dd cc bb =
   let
@@ -572,8 +573,8 @@ buildTimeSig nn dd cc bb =
   in
     TimeSignature nn denom cc bb
 
--- | build a SysEx message for a stream-based SysEx event
--- | this simply means appending the terminating 0xF7 to the data bytes
+-- build a SysEx message for a stream-based SysEx event
+-- this simply means appending the terminating 0xF7 to the data bytes
 buildStreamSysEx :: Int -> List Char -> Event
 buildStreamSysEx sysExType bytes =
   buildSysEx sysExType (bytes <> (fromCharCode sysExTerminator : Nil))
@@ -613,7 +614,7 @@ catChars = fold <<< map singleton
 
 -- exported functions
 
--- | Parse a MIDI event
+-- | Parse a MIDI event that emanates from a Web MIDI connection to the browser.
 parseMidiEvent :: String -> Either String Event
 parseMidiEvent s =
   case runParser midiStreamEvent s of
@@ -624,7 +625,7 @@ parseMidiEvent s =
     Left e ->
       Left $ show e
 
--- | entry point - Parse a normalised MIDI file image
+-- | Parse a normalised MIDI file image.
 parse :: String -> Either String Recording
 parse s =
   case runParser midi s of
@@ -634,7 +635,10 @@ parse s =
     Left e ->
       Left $ show e
 
--- | normalise the input before we parse by masking off all but the least significant 8 bits
+-- | Normalise the input. A MIDI recording is obtainable (for example) via
+-- | an XMLHttpRequest and making use of the override MIME type hack.
+-- | This method masks off all but the least significant 8 bits and treats the
+-- | result as a character array.
 normalise :: String -> String
 normalise =
   let
@@ -642,7 +646,7 @@ normalise =
   in
     toCharArray >>> map f >>> fromCharArray
 
--- temporary for testing purposes
+-- | Parse a MIDI message.  Probably only useful for debug purposes.
 parseMidiMessage :: String -> Either String Message
 parseMidiMessage s =
   case runParser (midiMessage Nothing) s of

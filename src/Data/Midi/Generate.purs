@@ -1,7 +1,7 @@
-module Data.Midi.Generate (Context(..), event, recording, midiMessage) where
 
--- | Library for encoding MIDI types as "binary"
--- | adapted from the elm-comidi version courtesy of @rhofour
+-- | Encode MIDI types as "binary"
+-- | adapted from the elm-comidi version courtesy of @rhofour.
+module Data.Midi.Generate (Context(..), event, recording, midiMessage) where
 
 import Data.Midi
 
@@ -11,10 +11,13 @@ import Data.List (List(..), (:), concat, concatMap, fromFoldable, length)
 import Data.String (length, toCharArray) as Str
 import Prelude (map, ($), (+), (<), (<<<), (<=), (<>))
 
+-- | The MIDI generation context. This differs according to whether we're
+-- | generating a file or an Event stream.
 data Context =
     File
   | Stream
 
+-- | Generate a MIDI event.
 event :: Context -> Event -> List Byte
 event ctx evt =
   case evt of
@@ -117,11 +120,15 @@ event ctx evt =
     _ ->
       Nil
 
-
+-- | Generate a MIDI recording
 recording :: Recording -> List Byte
 recording (Recording {header, tracks} ) =
   (head header (length tracks)) <> (concatMap track tracks)
 
+-- | generate a MIDI message
+midiMessage :: Message -> List Byte
+midiMessage ( Message ticks ev ) =
+  (varInt ticks) <> (event File ev)
 
 
 -- Lower level generators
@@ -162,10 +169,6 @@ track (Track t) =
   in
     (strToBytes "MTrk") <> uint32 len <> encodedMsgs
 
-
-midiMessage :: Message -> List Byte
-midiMessage ( Message ticks ev ) =
-  (varInt ticks) <> (event File ev)
 
 {-
 fileEvent :: Event -> List Byte
@@ -262,11 +265,11 @@ varInt x =
     else
       varIntHelper (shr x 7) ( and 127 x : Nil )
 
--- | this messy little routine is intended to convert 2^n to n
--- | for 0 <= n <= 7
--- | i.e. convert a time signature (e.g. the 4 in 3/4) to a power of 2
--- | I want to avoid the dependency on purescript-decimals which has an
--- | awkward transitive dependency on decimal.js
+-- this messy little routine is intended to convert 2^n to n
+-- for 0 <= n <= 7
+-- i.e. convert a time signature (e.g. the 4 in 3/4) to a power of 2
+-- I want to avoid the dependency on purescript-decimals which has an
+-- awkward transitive dependency on decimal.js
 pseudoLog :: Int -> Int
 pseudoLog x =
   if (x <= 1) then 0
