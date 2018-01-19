@@ -132,8 +132,8 @@ arbMode = chooseInt 0 1
 arbSysExBytes :: Generate.Context -> Gen (List Int)
 arbSysExBytes ctx =
   do
-    count <- chooseInt 2 5
-    --  count <- chooseInt 2 127
+    count <- chooseInt 2 2048
+    -- count <- chooseInt 2 127
     bytes <- listOf count arbSysExByte
     let
       terminatedBytes =  (bytes <> (0xF7 : Nil))
@@ -184,7 +184,12 @@ arbPitchBend =
 -- | arbitrary system exclusive event
 arbSysEx :: Generate.Context -> Gen Event
 arbSysEx ctx =
-    SysEx <$> arbSysExFlavour <*> arbSysExBytes ctx
+  case ctx of
+    Generate.File ->
+      SysEx <$> arbSysExFlavour <*> arbSysExBytes ctx
+    _  ->
+      -- stream SysEx only exists in the F0 flavour
+      SysEx <$> pure F0 <*> arbSysExBytes ctx
 
 -- arbitrary meta events
 arbSequenceNumber :: Gen Event

@@ -388,9 +388,10 @@ sysEx =
   buildSysEx <$> bchoice 0xF0 0xF7 <*> (varInt >>= (\l -> count l anyChar)) <?> "system exclusive"
 
 -- a SysEx within a stream context
+-- here, F0 us the only flavour
 streamSysEx :: Parser Event
 streamSysEx =
-  buildStreamSysEx <$> bchoice 0xF0 0xF7 <*>
+  buildStreamSysEx <$> bchar 0xF0  <*>
     (many1Till notSysExEnd (char $ fromCharCode sysExTerminator))
 
 {- parse an unspecified meta event

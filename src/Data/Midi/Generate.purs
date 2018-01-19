@@ -21,14 +21,7 @@ data Context =
 event :: Context -> Event -> List Byte
 event ctx evt =
   case evt of
-    {-  stream version
-    SysEx F0 bytes ->
-      0xF0 : bytes
 
-    SysEx F7 bytes ->
-      bytes
-    -}
-    -- file version
     SysEx F0 bytes ->
       case ctx of
         File ->
@@ -42,7 +35,8 @@ event ctx evt =
         File ->
           0xF7 : (varInt (length bytes)) <> bytes
         _ ->
-          0xF7 : bytes
+          -- not ideal.  Stream SysEx only uses the F0 flavour
+          0xF0 : bytes
 
     -- channel events
     NoteOn channel note velocity ->
