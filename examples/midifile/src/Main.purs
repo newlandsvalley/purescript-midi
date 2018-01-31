@@ -16,7 +16,7 @@ import Text.Smolder.HTML (div, h1, p, input)
 import Text.Smolder.HTML.Attributes (type', id, accept)
 import Text.Smolder.Markup (Attribute, text, (#!), (!))
 import Signal.Channel (CHANNEL)
-import BinaryFileIO.FileIO
+import JS.FileIO (FILEIO, Filespec, loadBinaryFileAsText)
 
 data Event
   = NoOp
@@ -37,7 +37,7 @@ foldp RequestFileUpload state =
  { state: state
    , effects:
      [ do
-         filespec <- loadBinaryFile
+         filespec <- loadBinaryFileAsText "fileinput"
          pure $ Just (FileLoaded filespec)
      ]
   }
@@ -67,7 +67,7 @@ fullParse s =
 view :: State -> HTML Event
 view state =
    div  do
-     h1 ! centreStyle $ text "view a MIDI file"
+     h1 ! centreStyle $ text "view a MIDI file loaded from the file system"
      div do
        input ! type' "file" ! id "fileinput" ! accept ".midi"
          #! onChange (const RequestFileUpload)

@@ -3,6 +3,7 @@
   "private": true,
   "dependencies": {
     "purescript-midi": "https://github.com/newlandsvalley/purescript-midi.git",
-    "purescript-pux": "^9.1.0"
+    "purescript-js-fileio": "https://github.com/newlandsvalley/purescript-js-fileio.git#1.0.2",
+    "purescript-pux": "^12.0.0"
   }
 }
