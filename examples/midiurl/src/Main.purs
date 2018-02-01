@@ -32,7 +32,6 @@ import Data.Int.Bits (and)
 import Data.Char (fromCharCode)
 import Data.String (fromCharArray)
 
-
 type ReturnedType = ArrayBuffer
 
 data Event
@@ -40,9 +39,8 @@ data Event
   | RequestUrlUpload
   | FileLoaded ArrayBuffer
 
-
 type State =
-  { midi :: Maybe ArrayBuffer }
+  { midi :: Maybe String }
 
 initialState :: State
 initialState = {
@@ -64,20 +62,24 @@ foldp (FileLoaded contents) state =
 
 saveMidi :: ArrayBuffer -> State -> State
 saveMidi contents state =
-   state { midi = Just contents }
+   state { midi = Just $ (denormalise <<< toUint8Array) contents }
 
 viewParsedFile :: State -> String
 viewParsedFile state =
   case state.midi of
     Nothing ->
       ""
-    Just contents ->
-      fullParse $ denormalise $ toUint8Array contents
+    Just midi ->
+      fullParse midi
 
 toUint8Array :: ArrayBuffer ->  Uint8Array
 toUint8Array ab =
   asUint8Array $ whole ab
 
+-- | convert the unsigned integer array to the 'binary string' which is expected
+-- | by the MIDI parser.  This is the same format that would be returned either
+-- | by readAsBinaryString or by using the override MIME type hack in XmlHttpRequest.
+-- | denormalise is the 'mirror' function to the MIDI parser's normalise function.
 denormalise :: Uint8Array -> String
 denormalise =
   let
@@ -101,7 +103,6 @@ loadMidi name = do
   let
     url =
       "midi/" <> name
-      --  "http://localhost/PureScript/purescript-midi/midi/" <> name
   res <- affjax $ defaultRequest
            { url = url
            , method = Left GET
