@@ -1,5 +1,10 @@
 {
   "name": "purescript-midi",
+  "description": "MIDI and web MIDI support",
+  "keywords": [
+    "purescript"
+  ],
+  "license": "MIT",
   "ignore": [
     "**/.*",
     "node_modules",
@@ -7,6 +12,10 @@
     "output",
     "examples"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/newlandsvalley/purescript-midi.git"
+  },
   "dependencies": {
     "purescript-prelude": "^3.1.0",
     "purescript-lists": "^4.8.0",
