@@ -626,7 +626,7 @@ parseMidiEvent s =
     Left e ->
       Left $ show e
 
--- | Parse a normalised MIDI file image.
+-- | Parse a normalised MIDI string.
 parse :: String -> Either String Recording
 parse s =
   case runParser midi s of
@@ -636,9 +636,11 @@ parse s =
     Left e ->
       Left $ show e
 
--- | Normalise the input. A MIDI recording is obtainable (for example) via
--- | an XMLHttpRequest and making use of the override MIME type hack.
--- | This method masks off all but the least significant 8 bits and treats the
+-- | Normalise the input. The un-normalised input can by obtained (for example)
+-- | by using readAsBinaryString or else by using XMLHttpRequest and then  making
+-- | use of the override MIME type hack.
+-- |
+-- | This function masks off all but the least significant 8 bits and treats the
 -- | result as a character array.
 normalise :: String -> String
 normalise =

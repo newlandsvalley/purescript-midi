@@ -1,7 +1,7 @@
 # Changelog
 
 
-### Version x.y.z
+### Version 1.2.0
 
 #### breaking changes
 

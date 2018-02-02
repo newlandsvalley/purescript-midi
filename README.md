@@ -10,7 +10,7 @@ This library allows you to both parse and generate MIDI event streams and MIDI r
 
 To parse a MIDI string that represents a recording and thus generate a value of type __Midi.Recording__ you can use:
 
-    (parse <<< normalise) midi
+    (parse <<< normalise) midiString
 
 On the other hand, you may merely need to parse MIDI events (such as note on or note off) that emenate from a Web MIDI connection. In other words, you are connecting directly to a MIDI device through the browser and need to parse the stream of event messages as the instrument is played.  To do this, use:
 
