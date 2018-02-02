@@ -25,3 +25,7 @@ This will attempt to parse an individual event.
 ## Examples
 
 See examples.
+
+## Module documentation
+
+Module documentation is [published on Pursuit](http://pursuit.purescript.org/packages/purescript-midi).
