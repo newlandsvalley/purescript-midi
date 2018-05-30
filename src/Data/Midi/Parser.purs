@@ -6,25 +6,24 @@ module Data.Midi.Parser
         , parseMidiMessage
         ) where
 
-import Prelude (Unit, unit, ($), (<$>), (<$), (<*>), (*>), (+), (-), (>), (<),
-                (==), (>=), (<=), (&&), (>>=), (>>>), (<<<), (<>), map, pure, show, void)
+import Data.Midi
+
 import Control.Alt ((<|>))
-import Data.List (List(..), (:))
-import Data.Array (cons) as Array
-import Data.Foldable (fold, foldl)
-import Data.Unfoldable (replicateA)
-import Data.Either (Either(..))
-import Data.Tuple (Tuple(..))
-import Data.Maybe (Maybe(..))
+import Data.Array (cons, fromFoldable) as Array
 import Data.Char (fromCharCode, toCharCode)
-import Data.String (singleton, fromCharArray, toCharArray)
+import Data.Either (Either(..))
+import Data.Foldable (foldl)
 import Data.Int (pow)
 import Data.Int.Bits (and, shl)
+import Data.List (List(..), (:))
+import Data.Maybe (Maybe(..), fromMaybe)
+import Data.String.CodeUnits (fromCharArray, toCharArray)
+import Data.Tuple (Tuple(..))
+import Data.Unfoldable (replicateA)
+import Prelude (Unit, unit, ($), (<$>), (<$), (<*>), (*>), (+), (-), (>), (<), (==), (>=), (<=), (&&), (>>=), (>>>), (<<<), (<>), map, pure, show, void)
 import Text.Parsing.StringParser (Parser, runParser, try, fail)
-import Text.Parsing.StringParser.String (anyChar, satisfy, string, char, noneOf)
 import Text.Parsing.StringParser.Combinators (choice, many, many1Till, (<?>))
-
-import Data.Midi
+import Text.Parsing.StringParser.String (anyChar, satisfy, string, char, noneOf)
 
 {- debugging utilities
 
@@ -88,7 +87,7 @@ signedInt8 =
 -- parse a specific binary 8 bit integer
 bchar :: Int -> Parser Int
 bchar val =
-  toCharCode <$> char (fromCharCode (val))
+  toCharCode <$> char (unsafeFromCharCode (val))
 
 -- parse an 8 bit integer lying within a range
 brange :: Int -> Int -> Parser Int
@@ -106,11 +105,11 @@ bchoice x y =
 
 notTrackEnd :: Parser Int
 notTrackEnd =
-  toCharCode <$> noneOf [ fromCharCode 0x2F ]
+  toCharCode <$> noneOf [ unsafeFromCharCode 0x2F ]
 
 notSysExEnd :: Parser Char
 notSysExEnd =
-  noneOf [ fromCharCode sysExTerminator ]
+  noneOf [ unsafeFromCharCode sysExTerminator ]
 
 -- fixed length integers
 uint16 :: Parser Int
@@ -392,7 +391,7 @@ sysEx =
 streamSysEx :: Parser Event
 streamSysEx =
   buildStreamSysEx <$> bchar 0xF0  <*>
-    (many1Till notSysExEnd (char $ fromCharCode sysExTerminator))
+    (many1Till notSysExEnd (char $ unsafeFromCharCode sysExTerminator))
 
 {- parse an unspecified meta event
 
@@ -578,7 +577,7 @@ buildTimeSig nn dd cc bb =
 -- this simply means appending the terminating 0xF7 to the data bytes
 buildStreamSysEx :: Int -> List Char -> Event
 buildStreamSysEx sysExType bytes =
-  buildSysEx sysExType (bytes <> (fromCharCode sysExTerminator : Nil))
+  buildSysEx sysExType (bytes <> (unsafeFromCharCode sysExTerminator : Nil))
 
 buildSysEx :: Int -> List Char -> Event
 buildSysEx sysExType bytes =
@@ -611,7 +610,13 @@ makeTuple a b =
 
 -- utils
 catChars :: List Char -> String
-catChars = fold <<< map singleton
+catChars = 
+  fromCharArray <<< Array.fromFoldable
+
+unsafeFromCharCode :: Int -> Char
+unsafeFromCharCode i =
+  fromMaybe 'a' $ fromCharCode i
+
 
 -- exported functions
 
@@ -645,7 +650,7 @@ parse s =
 normalise :: String -> String
 normalise =
   let
-    f = toCharCode >>> ((and) 0xFF) >>> fromCharCode
+    f = toCharCode >>> ((and) 0xFF) >>> unsafeFromCharCode
   in
     toCharArray >>> map f >>> fromCharArray
 

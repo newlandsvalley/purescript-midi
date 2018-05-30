@@ -119,7 +119,7 @@ instance ordMessage :: Ord Message where
   compare = genericCompare
 
 -- | A Midi Track.
-data Track = Track
+newtype Track = Track
   (List Message)
 
 derive instance genericTrack :: Generic Track _
@@ -135,7 +135,7 @@ instance ordTrack :: Ord Track where
 
 
 -- | The Midi Header.
-data Header = Header
+newtype Header = Header
     { formatType :: Int
     , trackCount :: Int
     , ticksPerBeat :: Int
@@ -149,11 +149,8 @@ instance showHeader :: Show Header where
 instance eqHeader :: Eq Header where
   eq = genericEq
 
-instance ordHeader :: Ord Header where
-  compare = genericCompare
-
 -- | A Midi Recording.
-data Recording = Recording
+newtype Recording = Recording
     { header :: Header
     , tracks :: List Track
     }
@@ -165,6 +162,3 @@ instance showRecording :: Show Recording where
 
 instance eqRecording :: Eq Recording where
   eq = genericEq
-
-instance ordRecording:: Ord Recording where
-  compare = genericCompare

@@ -1,8 +1,7 @@
 -- | This module provides plug and play support for MIDI input devices such as
 -- | MIDI keyboards.
 module Data.Midi.WebMidi
-  ( WEBMIDI
-  , RawMidiEvent
+  ( RawMidiEvent
   , Device
   , webMidiConnect
   , detectInputDevices
@@ -11,13 +10,13 @@ module Data.Midi.WebMidi
   , createEventChannel
   ) where
 
-import Control.Monad.Eff (kind Effect, Eff)
+import Effect (Effect)
 import Prelude (Unit, flip, bind, const, pure )
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Midi (TimedEvent(..)) as Midi
 import Data.Midi.Parser (parseMidiEvent)
-import Signal.Channel (CHANNEL, Channel, channel, send)
+import Signal.Channel (Channel, channel, send)
 import Signal
 
 -- | A 'raw' Midi Event where the event has not been decoded.
@@ -36,18 +35,14 @@ type Device =
  , version :: String
 }
 
--- | The WEBMIDI Effect.
-foreign import data WEBMIDI :: Effect
-
 -- | listen to 'raw' web-MIDI event messages.
-foreign import listen :: forall e. (RawMidiEvent -> Eff e Unit) -> Eff e Unit
+foreign import listen :: (RawMidiEvent -> Effect Unit) -> Effect Unit
 
 -- | detect any input device as it connects or disconnects
-foreign import detectInputDevices :: forall e. (Device -> Eff e Unit) -> Eff e Unit
+foreign import detectInputDevices :: (Device -> Effect Unit) -> Effect Unit
 
 -- | try to connect to Web-Midi.
-foreign import webMidiConnect
-  :: forall eff. (Eff (wm :: WEBMIDI | eff) Boolean)
+foreign import webMidiConnect :: Effect Boolean
 
 -- | convert a raw MIDI event to a comprehensible one by parsing the binary event.
 timedMidiEvent :: RawMidiEvent -> Midi.TimedEvent
@@ -82,20 +77,15 @@ deviceSignal :: Device -> Signal Device
 deviceSignal d =
   foldp (flip const) d initialDeviceSignal
 
-deviceChannel :: ∀ eff. Eff (channel :: CHANNEL | eff) (Channel Device)
+deviceChannel :: Effect (Channel Device)
 deviceChannel = channel initialDevice
 
-sendDevice :: ∀ eff. Channel Device -> Device -> Eff (channel :: CHANNEL | eff) Unit
+sendDevice :: Channel Device -> Device -> Effect Unit
 sendDevice chan d =
   send chan d
 
 -- | create a channel for MIDI device connections/disconnections and feed it from web-midi
-createDeviceChannel :: ∀ eff.
-  Eff
-    ( channel :: CHANNEL
-    | eff
-    )
-    (Channel Device)
+createDeviceChannel :: Effect (Channel Device)
 createDeviceChannel = do
   channel <- deviceChannel
   _ <- detectInputDevices (sendDevice channel)
@@ -115,20 +105,15 @@ eventSignal :: Midi.TimedEvent -> Signal Midi.TimedEvent
 eventSignal rme =
   foldp (flip const) rme initialEventSignal
 
-eventChannel :: ∀ eff. Eff (channel :: CHANNEL | eff) (Channel Midi.TimedEvent)
+eventChannel :: Effect (Channel Midi.TimedEvent)
 eventChannel = channel initialEvent
 
-sendEvent :: ∀ eff. Channel Midi.TimedEvent -> RawMidiEvent -> Eff (channel :: CHANNEL | eff) Unit
+sendEvent :: Channel Midi.TimedEvent -> RawMidiEvent -> Effect Unit
 sendEvent chan rme =
   send chan (timedMidiEvent rme)
 
 -- | create a channel for MIDI timed event messages and feed it from web-midi
-createEventChannel :: ∀ eff.
-  Eff
-    ( channel :: CHANNEL
-    | eff
-    )
-    (Channel Midi.TimedEvent)
+createEventChannel :: Effect (Channel Midi.TimedEvent)
 createEventChannel = do
   channel <- eventChannel
   _ <- listen (sendEvent channel)

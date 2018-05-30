@@ -3,20 +3,20 @@ module Test.Parser (parserChecksSuite) where
 
 import Data.Midi
 
-import Control.Monad.Eff.Random (RANDOM)
 import Control.Monad.Free (Free)
-import Data.Array (singleton)
+import Data.Array (singleton, fromFoldable) as Array
 import Data.Char (fromCharCode)
 import Data.Either (Either(..))
 import Data.List (List(..), (:), fromFoldable, toUnfoldable)
-import Data.Tuple (Tuple(..))
+import Data.Maybe (fromMaybe)
 import Data.Midi.Generate as Generate
 import Data.Midi.Parser (parse, parseMidiEvent, parseMidiMessage)
 import Data.NonEmpty (NonEmpty, (:|))
-import Data.String (fromCharArray)
-import Prelude (Unit, ($), (<$>), (<*>), (<>), (+), bind, discard, map, negate, pure)
+import Data.String.CodeUnits (fromCharArray)
+import Data.Tuple (Tuple(..))
+import Prelude (Unit, ($), (<$>), (<*>), (<>), (+), (<<<), bind, discard, map, negate, pure)
 import Test.QuickCheck (Result, (===))
-import Test.QuickCheck.Arbitrary (class Arbitrary, arbitrary)
+import Test.QuickCheck.Arbitrary (class Arbitrary)
 import Test.QuickCheck.Gen (Gen, chooseInt, elements, frequency, listOf, oneOf)
 import Test.Unit (TestF, test, suite)
 import Test.Unit.QuickCheck (quickCheck)
@@ -150,6 +150,19 @@ arbBytes =
     count <- chooseInt 1 256
     listOf count arbByte
 
+-- arbitrary printable strings
+-- we'll restrict these to be 20 chars in length
+-- containing 'reasonable' ASCII characters for the tome being
+arbPrintableString :: Gen String
+arbPrintableString = catChars <$> listOf 20 genSafeChar
+
+genSafeChar :: Gen Char
+genSafeChar = unsafeFromCharCode <$> chooseInt 32 90
+
+catChars :: List Char -> String
+catChars =
+  fromCharArray <<< Array.fromFoldable
+
 -- arbitrary channel events
 
 arbNoteOn :: Gen Event
@@ -198,31 +211,38 @@ arbSequenceNumber =
 
 arbText :: Gen Event
 arbText =
-  Text <$> arbitrary
+  Text <$> arbPrintableString
+  -- Text <$> arbitrary
 
 arbCopyright :: Gen Event
 arbCopyright=
-  Copyright <$> arbitrary
+  Copyright <$> arbPrintableString
+  --  Copyright <$> arbitrary
 
 arbTrackName :: Gen Event
 arbTrackName =
-  TrackName <$> arbitrary
+  TrackName <$> arbPrintableString
+  --  TrackName <$> arbitrary
 
 arbInstrumentName :: Gen Event
 arbInstrumentName =
-  InstrumentName <$> arbitrary
+  InstrumentName <$> arbPrintableString
+  --  InstrumentName <$> arbitrary
 
 arbLyrics :: Gen Event
 arbLyrics =
-  Lyrics <$> arbitrary
+  Lyrics <$> arbPrintableString
+  --  Lyrics <$> arbitrary
 
 arbMarker :: Gen Event
 arbMarker =
-  Marker <$> arbitrary
+  Marker <$> arbPrintableString
+  --  Marker <$> arbitrary
 
 arbCuePoint :: Gen Event
 arbCuePoint =
-  CuePoint <$> arbitrary
+  CuePoint <$> arbPrintableString
+  --  CuePoint <$> arbitrary
 
 arbChannelPrefix :: Gen Event
 arbChannelPrefix =
@@ -314,7 +334,7 @@ commonEvents =
 
 allEvents :: Generate.Context -> NonEmpty Array (Gen Event)
 allEvents ctx =
-  arbNoteOn :| (channelEvents <> singleton (arbSysEx ctx) <> metaEvents)
+  arbNoteOn :| (channelEvents <> Array.singleton (arbSysEx ctx) <> metaEvents)
 
 weightedEvents :: Generate.Context -> NonEmpty List (Tuple Number (Gen Event))
 weightedEvents ctx =
@@ -348,7 +368,8 @@ arbTestMessage =
 arbTrack :: Gen Track
 arbTrack =
   do
-    count <- chooseInt 0 250
+    count <- chooseInt 0 256
+    --  count <- chooseInt 0 250
     Track <$> listOf count arbMessage
 
 arbTracks :: Int -> Gen (List Track)
@@ -386,7 +407,7 @@ arbTestRecording =
 
 toByteString :: List Int -> String
 toByteString list =
-    fromCharArray $ map fromCharCode (toUnfoldable list)
+    fromCharArray $ map unsafeFromCharCode (toUnfoldable list)
 
 -- | the test properties
 
@@ -411,8 +432,12 @@ roundTripRecordingProperty (TestRecording r) =
   in
     (Right r :: Either String Recording) === recording
 
+unsafeFromCharCode :: Int -> Char
+unsafeFromCharCode i =
+  fromMaybe 'a' $ fromCharCode i
+
 -- | the test suite
-parserChecksSuite :: forall t. Free (TestF (random :: RANDOM | t)) Unit
+parserChecksSuite :: Free TestF Unit
 parserChecksSuite = do
   suite "parser" do
     test "round trip (stream) event" do

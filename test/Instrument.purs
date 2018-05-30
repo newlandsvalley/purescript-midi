@@ -6,7 +6,6 @@ import Data.List (toUnfoldable)
 import Data.NonEmpty ((:|))
 import Data.Maybe (Maybe(..))
 import Control.Monad.Free (Free)
-import Control.Monad.Eff.Random (RANDOM)
 import Test.Unit (TestF, test, suite)
 import Test.Unit.Assert (equal) as Assert
 import Test.QuickCheck.Arbitrary (class Arbitrary)
@@ -36,7 +35,7 @@ roundTripInstrumentProperty (TestInstrument i) =
   in
     (Just i :: Maybe InstrumentName) === instrument
 
-instrumentChecksSuite :: forall t. Free (TestF (random :: RANDOM | t)) Unit
+instrumentChecksSuite :: forall t. Free TestF Unit
 instrumentChecksSuite = do
   suite "instrument" do
     test "unknown" do

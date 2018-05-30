@@ -1,5 +1,8 @@
 # Changelog
 
+### Version 2.0.0
+
+* PS Compiler 0.12
 
 ### Version 1.2.0
 

@@ -4,25 +4,16 @@ import Prelude (Unit, bind, discard, show, ($), (<<<), (<>))
 import Data.Midi (Recording)
 import Data.Midi.Parser (normalise, parse)
 import Node.Path as Path
-import Control.Monad.Eff.Exception (Error)
-import Control.Monad.Aff (liftEff')
+import Effect.Exception (Error)
+import Effect.Class (liftEffect)
 import Control.Monad.Free (Free)
 import Data.Either (Either(..))
-import Node.Buffer (BUFFER, toString)
+import Node.Buffer (toString)
 import Node.Encoding (Encoding(..))
-import Node.FS (FS)
 import Node.FS.Aff (readFile)
 import Test.Unit (Test, TestF, test, suite, success, failure)
 
-parserSuite :: forall t.
-        Free
-          (TestF
-             ( fs :: FS
-             , buffer :: BUFFER
-             | t
-             )
-          )
-          Unit
+parserSuite ::  Free TestF Unit
 parserSuite = do
   suite "file parser" do
     test "lillasystern" do
@@ -41,32 +32,22 @@ parserSuite = do
       assertParses "lomond.midi"
 
 -- | tunnel a binary MIDI file as text and parse it
-assertParses :: ∀ e.
-        String
-        -> Test
-             ( fs :: FS
-             , buffer :: BUFFER
-             | e
-             )
+assertParses :: String -> Test
 assertParses fileName =
   do
     let
       fp = Path.concat
     buffer <- readFile (fp ["midi", fileName])
-    estr <- liftEff' $ (toString Binary) buffer
+    estr <- liftEffect $ (toString Binary) buffer
     canParse estr
 
-canParse :: ∀ e. Either Error String -> Test e
-canParse estr =
-  case estr of
-    Right midi ->
-      case fullParse midi of
-        Right _ ->
-          success
-        Left err ->
-          failure (err)
+canParse :: String -> Test
+canParse str =
+  case fullParse str of
+    Right _ ->
+      success
     Left err ->
-      failure $ "Read error:" <> show err
+      failure (err)
         where
           fullParse :: String -> Either String Recording
           fullParse s =

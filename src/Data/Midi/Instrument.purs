@@ -16,13 +16,13 @@ import Data.Generic.Rep.Eq as GEq
 import Data.Generic.Rep.Ord as GOrd
 import Data.Generic.Rep.Show as GShow
 import Data.Foldable (foldr)
-import Data.String (fromCharArray, toCharArray)
+import Data.String.CodeUnits (fromCharArray, toCharArray)
 import Data.Char.Unicode (isUpper, isDigit, toLower)
 import Data.Array (cons, drop)
 import Data.List (List(..), (:))
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Map (Map, fromFoldable, lookup) as Map
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe, fromMaybe)
 
 -- | MIDI instrument names
 data InstrumentName =
@@ -78,6 +78,8 @@ instance ordInstrumentName :: Ord InstrumentName where
 instance showInstrumentName :: Show InstrumentName where
   show x = GShow.genericShow x
 
+
+
 -- | Convert a MIDI instrument name to a Gleitzman name
 -- | for example ElectricPiano1 -> electric_piano_1
 gleitzmanName :: InstrumentName -> String
@@ -89,13 +91,12 @@ gleitzmanName inst =
       f c acc =
         -- all capitals should invoke an underscore unless at the start
         if (isUpper c) then
-          cons '_' (cons (toLower c) acc)
+          cons '_' (cons (safeToLower c) acc)
         else if (isDigit c) then
           cons '_' (cons c acc)
         else
-          cons (toLower c) acc
-
-
+          cons (safeToLower c) acc
+          
 -- | the set of supported instruments, using the Gleitzman names
 gleitzmanNames :: List String
 gleitzmanNames =
@@ -248,3 +249,6 @@ mapping =
    : Tuple (gleitzmanName Woodblock) Woodblock
    : Tuple (gleitzmanName Xylophone) Xylophone
    : Nil
+
+safeToLower :: Char -> Char
+safeToLower c = fromMaybe c $ toLower c

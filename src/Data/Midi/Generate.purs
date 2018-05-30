@@ -8,7 +8,8 @@ import Data.Midi
 import Data.Char (toCharCode)
 import Data.Int.Bits (shr, and)
 import Data.List (List(..), (:), concat, concatMap, fromFoldable, length)
-import Data.String (length, toCharArray) as Str
+import Data.String (length) as Str
+import Data.String.CodeUnits (toCharArray)
 import Prelude (map, ($), (+), (<), (<<<), (<=), (<>))
 
 -- | The MIDI generation context. This differs according to whether we're
@@ -40,22 +41,22 @@ event ctx evt =
 
     -- channel events
     NoteOn channel note velocity ->
-      ( 0x90 + channel : note : velocity : Nil )
+      (0x90 + channel) : note : velocity : Nil
 
     NoteOff channel note velocity ->
-      ( 0x80 + channel : note : velocity : Nil )
+      (0x80 + channel) : note : velocity : Nil
 
     NoteAfterTouch channel note velocity ->
-      ( 0xA0 + channel : note : velocity : Nil )
+      (0xA0 + channel) : note : velocity : Nil
 
     ControlChange channel controllerNumber value ->
-      ( 0xB0 + channel : controllerNumber : value : Nil )
+      (0xB0 + channel) : controllerNumber : value : Nil
 
     ProgramChange channel value ->
-      ( 0xC0 + channel : value : Nil )
+      (0xC0 + channel) : value : Nil
 
     ChannelAfterTouch channel velocity ->
-      ( 0xD0 + channel : velocity : Nil )
+      ( 0xD0 + channel) : velocity : Nil
 
     PitchBend channel bend ->
       let
@@ -65,7 +66,7 @@ event ctx evt =
         upper =
           shr bend 7
       in
-        ( 0xE0 + channel : lower : upper : Nil)
+        (0xE0 + channel) : lower : upper : Nil
 
     -- meta events
     SequenceNumber seq ->
@@ -186,7 +187,7 @@ fileEvent e =
 -- fixed length strings
 strToBytes :: String -> List Byte
 strToBytes =
-  (map toCharCode) <<< fromFoldable <<< Str.toCharArray
+  (map toCharCode) <<< fromFoldable <<< toCharArray
 
 -- variable length strings
 vstrToBytes :: String -> List Byte

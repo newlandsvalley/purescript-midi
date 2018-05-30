@@ -17,19 +17,20 @@
     "url": "git://github.com/newlandsvalley/purescript-midi.git"
   },
   "dependencies": {
-    "purescript-prelude": "^3.1.0",
-    "purescript-lists": "^4.8.0",
-    "purescript-string-parsers": "^3.0.1",
-    "purescript-integers": "^3.1.0",
-    "purescript-unicode": "^3.0.1",
-    "purescript-generics-rep": "^5.1.0",
-    "purescript-signal": "^9.0.0"
+    "purescript-prelude": "^4.0.0",
+    "purescript-lists": "^5.0.0",
+    "purescript-string-parsers": "https://github.com/justinwoo/purescript-string-parsers.git#compiler/0.12",
+    "purescript-integers": "^4.0.0",
+    "purescript-unicode": "https://github.com/justinwoo/purescript-unicode.git#compiler/0.12",
+    "purescript-generics-rep": "^6.0.0",
+    "purescript-signal": "https://github.com/newlandsvalley/purescript-signal.git#compiler/0.12"
   },
   "devDependencies": {
-    "purescript-psci-support": "^3.0.0",
-    "purescript-node-fs-aff": "^4.0.0",
-    "purescript-test-unit": "^11.0.0",
-    "purescript-quickcheck": "^4.6.1",
-    "purescript-assert": "^3.0.0"
+    "purescript-psci-support": "^4.0.0",
+    "purescript-node-fs-aff": "^6.0.0",
+    "purescript-node-buffer": "^5.0.0",
+    "purescript-test-unit": "^14.0.0",
+    "purescript-quickcheck": "^5.0.0",
+    "purescript-assert": "^4.0.0"
   }
 }
