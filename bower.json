@@ -19,7 +19,7 @@
   "dependencies": {
     "purescript-prelude": "^4.0.0",
     "purescript-lists": "^5.0.0",
-    "purescript-string-parsers": "https://github.com/justinwoo/purescript-string-parsers.git#compiler/0.12",
+    "purescript-string-parsers": "^4.0.0",
     "purescript-integers": "^4.0.0",
     "purescript-unicode": "https://github.com/justinwoo/purescript-unicode.git#compiler/0.12",
     "purescript-generics-rep": "^6.0.0",

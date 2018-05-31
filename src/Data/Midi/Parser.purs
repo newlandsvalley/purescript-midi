@@ -16,6 +16,7 @@ import Data.Foldable (foldl)
 import Data.Int (pow)
 import Data.Int.Bits (and, shl)
 import Data.List (List(..), (:))
+import Data.List.NonEmpty (NonEmptyList, fromList, singleton) as Nel
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String.CodeUnits (fromCharArray, toCharArray)
 import Data.Tuple (Tuple(..))
@@ -53,9 +54,23 @@ sysExTerminator = 0xF7
 skip :: forall a. Parser a -> Parser Unit
 skip = void
 
--- Parse `n` occurences of `p`. -
+-- Parse `n` occurences of `p`. n >= 0
 count :: forall a. Int -> Parser a -> Parser (List a)
 count = replicateA
+
+-- Parse `n` occurences of `p`. n > 0
+count1 :: forall a. Int -> Parser a -> Parser (Nel.NonEmptyList a)
+count1 c p =
+  replicateA c p >>= (\l -> validateNel $ Nel.fromList l)
+    where
+      validateNel :: Maybe (Nel.NonEmptyList a) -> Parser (Nel.NonEmptyList a)
+      validateNel ml =
+        case ml of
+          Nothing ->
+            fail "counted list of length 0"
+          Just nel ->
+             pure nel
+
 
 -- parse a binary 8 bit integer
 int8 :: Parser Int
@@ -383,8 +398,7 @@ sequencerSpecific =
 -- a SysEx within a file context
 sysEx :: Parser Event
 sysEx =
-  -- SysEx F0 <$> (map toCharCode <$> (bchoice 0xF0 0xF7 *> varInt >>= (\l -> count l anyChar))) <?> "system exclusive"
-  buildSysEx <$> bchoice 0xF0 0xF7 <*> (varInt >>= (\l -> count l anyChar)) <?> "system exclusive"
+  buildSysEx <$> bchoice 0xF0 0xF7 <*> (varInt >>= (\l -> count1 l anyChar)) <?> "system exclusive"
 
 -- a SysEx within a stream context
 -- here, F0 us the only flavour
@@ -575,11 +589,12 @@ buildTimeSig nn dd cc bb =
 
 -- build a SysEx message for a stream-based SysEx event
 -- this simply means appending the terminating 0xF7 to the data bytes
-buildStreamSysEx :: Int -> List Char -> Event
+buildStreamSysEx :: Int -> Nel.NonEmptyList Char -> Event
 buildStreamSysEx sysExType bytes =
-  buildSysEx sysExType (bytes <> (unsafeFromCharCode sysExTerminator : Nil))
+  buildSysEx sysExType (bytes <> (Nel.singleton $ unsafeFromCharCode sysExTerminator))
+  --  buildSysEx sysExType (bytes <> (unsafeFromCharCode sysExTerminator : Nil))
 
-buildSysEx :: Int -> List Char -> Event
+buildSysEx :: Int -> Nel.NonEmptyList Char -> Event
 buildSysEx sysExType bytes =
   let
     flavour = case sysExType of
@@ -610,7 +625,7 @@ makeTuple a b =
 
 -- utils
 catChars :: List Char -> String
-catChars = 
+catChars =
   fromCharArray <<< Array.fromFoldable
 
 unsafeFromCharCode :: Int -> Char

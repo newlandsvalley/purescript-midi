@@ -8,7 +8,8 @@ import Data.Array (singleton, fromFoldable) as Array
 import Data.Char (fromCharCode)
 import Data.Either (Either(..))
 import Data.List (List(..), (:), fromFoldable, toUnfoldable)
-import Data.Maybe (fromMaybe)
+import Data.List.NonEmpty (NonEmptyList, cons, fromList, singleton)
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Midi.Generate as Generate
 import Data.Midi.Parser (parse, parseMidiEvent, parseMidiMessage)
 import Data.NonEmpty (NonEmpty, (:|))
@@ -129,15 +130,20 @@ arbMode = chooseInt 0 1
 
 -- | the format of a SysEx event differs depending on
 -- whether it belongs to a stream or a file
-arbSysExBytes :: Generate.Context -> Gen (List Int)
+arbSysExBytes :: Generate.Context -> Gen (NonEmptyList Int)
 arbSysExBytes ctx =
   do
     count <- chooseInt 2 2048
     -- count <- chooseInt 2 127
-    bytes <- listOf count arbSysExByte
+    maybeNel <- fromList <$> listOf count arbSysExByte
     let
-      terminatedBytes =  (bytes <> (0xF7 : Nil))
-      countedBytes = (count + 1) : terminatedBytes
+      terminatedBytes =
+        case (maybeNel) of
+          Nothing ->
+            singleton 0xF7
+          Just bytes ->
+            bytes <> (singleton 0xF7)
+      countedBytes = cons (count + 1) terminatedBytes
     pure (case ctx of
         Generate.File -> countedBytes
         Generate.Stream -> terminatedBytes

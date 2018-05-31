@@ -8,6 +8,7 @@ import Data.Midi
 import Data.Char (toCharCode)
 import Data.Int.Bits (shr, and)
 import Data.List (List(..), (:), concat, concatMap, fromFoldable, length)
+import Data.List.NonEmpty (toList)
 import Data.String (length) as Str
 import Data.String.CodeUnits (toCharArray)
 import Prelude (map, ($), (+), (<), (<<<), (<=), (<>))
@@ -23,21 +24,27 @@ event :: Context -> Event -> List Byte
 event ctx evt =
   case evt of
 
-    SysEx F0 bytes ->
-      case ctx of
-        File ->
-         0xF0 : (varInt (length bytes)) <> bytes
-        _ ->
-         0xF0 : bytes
+    SysEx F0 nelBytes ->
+      let
+        bytes = toList nelBytes
+      in
+        case ctx of
+          File ->
+            0xF0 : (varInt (length bytes)) <> bytes
+          _ ->
+            0xF0 : bytes
 
     -- this is still not entirely clear
-    SysEx F7 bytes ->
-      case ctx of
-        File ->
-          0xF7 : (varInt (length bytes)) <> bytes
-        _ ->
-          -- not ideal.  Stream SysEx only uses the F0 flavour
-          0xF0 : bytes
+    SysEx F7 nelBytes ->
+      let
+        bytes = toList nelBytes
+      in
+        case ctx of
+          File ->
+            0xF7 : (varInt (length bytes)) <> bytes
+          _ ->
+            -- not ideal.  Stream SysEx only uses the F0 flavour
+            0xF0 : bytes
 
     -- channel events
     NoteOn channel note velocity ->

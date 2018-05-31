@@ -16,6 +16,7 @@ module Data.Midi
 
 import Prelude (class Show, class Eq, class Ord)
 import Data.List (List)
+import Data.List.NonEmpty (NonEmptyList(..)) as Nel
 import Data.Maybe (Maybe)
 import Data.Generic.Rep
 import Data.Generic.Rep.Eq (genericEq)
@@ -77,7 +78,7 @@ data Event
     | KeySignature Int Int
     | SequencerSpecific (List Byte)
       -- system exclusive message
-    | SysEx SysExFlavour (List Byte)
+    | SysEx SysExFlavour (Nel.NonEmptyList Byte)
     | Unspecified Int (List Byte)
       -- channel messages
     | NoteOn Channel Note Velocity
