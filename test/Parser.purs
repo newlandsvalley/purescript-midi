@@ -9,10 +9,10 @@ import Data.Char (fromCharCode)
 import Data.Either (Either(..))
 import Data.List (List(..), (:), fromFoldable, toUnfoldable)
 import Data.List.NonEmpty (NonEmptyList, cons, fromList, singleton)
+import Data.NonEmpty (NonEmpty, (:|))
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Midi.Generate as Generate
 import Data.Midi.Parser (parse, parseMidiEvent, parseMidiMessage)
-import Data.NonEmpty (NonEmpty, (:|))
 import Data.String.CodeUnits (fromCharArray)
 import Data.Tuple (Tuple(..))
 import Prelude (Unit, ($), (<$>), (<*>), (<>), (+), (<<<), bind, discard, map, negate, pure)
@@ -127,7 +127,6 @@ arbAccidentalCount = chooseInt (-7) 7
 arbMode :: Gen Int
 arbMode = chooseInt 0 1
 
-
 -- | the format of a SysEx event differs depending on
 -- whether it belongs to a stream or a file
 arbSysExBytes :: Generate.Context -> Gen (NonEmptyList Int)
@@ -143,6 +142,7 @@ arbSysExBytes ctx =
             singleton 0xF7
           Just bytes ->
             bytes <> (singleton 0xF7)
+      -- countedBytes = (count + 1) :| terminatedBytes
       countedBytes = cons (count + 1) terminatedBytes
     pure (case ctx of
         Generate.File -> countedBytes

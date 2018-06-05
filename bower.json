@@ -1,5 +1,6 @@
 {
   "name": "purescript-midi",
+  "version": "2.0.0",
   "description": "MIDI and web MIDI support",
   "keywords": [
     "purescript"
@@ -23,7 +24,7 @@
     "purescript-integers": "^4.0.0",
     "purescript-unicode": "https://github.com/justinwoo/purescript-unicode.git#compiler/0.12",
     "purescript-generics-rep": "^6.0.0",
-    "purescript-signal": "https://github.com/newlandsvalley/purescript-signal.git#compiler/0.12"
+    "purescript-signal": "^10.0.0"
   },
   "devDependencies": {
     "purescript-psci-support": "^4.0.0",
