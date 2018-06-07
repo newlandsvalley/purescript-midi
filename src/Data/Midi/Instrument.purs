@@ -22,7 +22,7 @@ import Data.Array (cons, drop)
 import Data.List (List(..), (:))
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Map (Map, fromFoldable, lookup) as Map
-import Data.Maybe (Maybe, fromMaybe)
+import Data.Maybe (Maybe)
 
 -- | MIDI instrument names
 data InstrumentName =
@@ -91,12 +91,12 @@ gleitzmanName inst =
       f c acc =
         -- all capitals should invoke an underscore unless at the start
         if (isUpper c) then
-          cons '_' (cons (safeToLower c) acc)
+          cons '_' (cons (toLower c) acc)
         else if (isDigit c) then
           cons '_' (cons c acc)
         else
-          cons (safeToLower c) acc
-          
+          cons (toLower c) acc
+
 -- | the set of supported instruments, using the Gleitzman names
 gleitzmanNames :: List String
 gleitzmanNames =
@@ -249,6 +249,3 @@ mapping =
    : Tuple (gleitzmanName Woodblock) Woodblock
    : Tuple (gleitzmanName Xylophone) Xylophone
    : Nil
-
-safeToLower :: Char -> Char
-safeToLower c = fromMaybe c $ toLower c
