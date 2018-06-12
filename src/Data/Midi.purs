@@ -16,7 +16,7 @@ module Data.Midi
 
 import Prelude (class Show, class Eq, class Ord)
 import Data.List (List)
-import Data.List.NonEmpty (NonEmptyList(..)) as Nel
+import Data.List.NonEmpty (NonEmptyList) as Nel
 import Data.Maybe (Maybe)
 import Data.Generic.Rep
 import Data.Generic.Rep.Eq (genericEq)
