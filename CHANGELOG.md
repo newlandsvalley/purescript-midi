@@ -4,7 +4,7 @@
 
 * PS Compiler 0.12
 
-### Version 1.2.0
+### Version 1.2.0 (2018-02-02)
 
 #### breaking changes
 

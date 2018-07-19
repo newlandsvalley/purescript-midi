@@ -1,7 +1,7 @@
 purescript-midi examples
 ========================
 
-All examples use purescript-pux as the web framework.
+All examples use purescript-pux as the web framework.  At the time of writing, Pux had not been upgraded to PureScript 0.12 and so the examples remain at PureScript 0.11.
 
 ### v1.2.0 examples
 
@@ -24,4 +24,5 @@ and two other players:
 
 For further up-to-date examples, see the following projects:
  [MIDI Keybioard](https://github.com/newlandsvalley/purescript-midi-keyboard),
- [ABC Editor](https://github.com/newlandsvalley/purescript-abc-editor), [PureScript School of Music Editor](https://github.com/newlandsvalley/purescript-school-of-music/tree/master/editor) etc.
+ [ABC Editor](https://github.com/newlandsvalley/purescript-abc-editor),
+ [PureScript School of Music Editor](https://github.com/newlandsvalley/purescript-school-of-music/tree/master/editor) etc.

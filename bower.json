@@ -1,6 +1,5 @@
 {
   "name": "purescript-midi",
-  "version": "2.0.0",
   "description": "MIDI and web MIDI support",
   "keywords": [
     "purescript"
