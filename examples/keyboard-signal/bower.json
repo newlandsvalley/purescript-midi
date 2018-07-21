@@ -2,8 +2,8 @@
   "name": "keyboard-signal",
   "private": true,
   "dependencies": {
-    "purescript-unicode": "^3.0.1",
-    "purescript-console": "^3.0.0",
-    "newlandsvalley/purescript-midi": "^1.2.0"
+    "purescript-unicode": "^4.0.1",
+    "purescript-console": "^4.1.0",
+    "newlandsvalley/purescript-midi": "^2.0.0"
   }
 }

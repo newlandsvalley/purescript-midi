@@ -1,17 +1,17 @@
 module Main where
 
 import Prelude (Unit, bind, (<>))
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Console (CONSOLE, log, logShow)
+import Effect (Effect)
+import Effect.Console (log, logShow)
 
 import Data.Midi.WebMidi
 import Data.Maybe (Maybe(..))
 import Data.Midi (TimedEvent(..)) as Midi
 
-import Signal.Channel (CHANNEL, subscribe)
+import Signal.Channel (subscribe)
 import Signal (Signal, runSignal, (~>))
 
-logDevice :: ∀ eff. Device -> Eff (console :: CONSOLE | eff) Unit
+logDevice :: Device -> Effect Unit
 logDevice d =
   let
     connectState =
@@ -22,20 +22,20 @@ logDevice d =
   in
     log ("MIDI device: " <> d.id <> connectState)
 
-logMidiEvent :: ∀ eff. Midi.TimedEvent -> Eff (console :: CONSOLE | eff) Unit
+logMidiEvent :: Midi.TimedEvent -> Effect Unit
 logMidiEvent (Midi.TimedEvent e) =
   case e.event of
     Just mev -> logShow mev
     Nothing -> log "event parse error "
 
-logEventEffect :: forall eff. Signal Midi.TimedEvent -> Signal (Eff (console :: CONSOLE | eff) Unit)
+logEventEffect :: Signal Midi.TimedEvent -> Signal (Effect Unit)
 logEventEffect s = s ~> logMidiEvent
 
-logDeviceEffect :: forall eff. Signal Device -> Signal (Eff (console :: CONSOLE | eff) Unit)
+logDeviceEffect :: Signal Device -> Signal (Effect Unit)
 logDeviceEffect s = s ~> logDevice
 
 -- | test web-midi event recognition
-testEvents :: forall eff. Eff (wm :: WEBMIDI, console :: CONSOLE, channel :: CHANNEL | eff) Unit
+testEvents :: Effect Unit
 testEvents = do
   -- create a channel for MIDI event messages and start
   -- feeding it from web-midi events (first message is a dummy)
@@ -47,7 +47,7 @@ testEvents = do
   runSignal (logEventEffect eventSignal)
 
 -- | test web-midi device connectipon disconnection
-testDevices :: forall eff. Eff (wm :: WEBMIDI, console :: CONSOLE, channel :: CHANNEL | eff) Unit
+testDevices :: Effect Unit
 testDevices = do
   -- create a channel for MIDI device connections and disconnections and start
   dChannel <- createDeviceChannel
@@ -57,7 +57,7 @@ testDevices = do
   -- and finally log the messages
   runSignal (logDeviceEffect deviceSignal)
 
-main :: forall eff. Eff (wm :: WEBMIDI, console :: CONSOLE, channel :: CHANNEL | eff) Unit
+main :: Effect Unit
 main = do
   -- connect to web-midi
   _ <- webMidiConnect
