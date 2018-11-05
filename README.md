@@ -12,7 +12,7 @@ To parse a MIDI string that represents a recording and thus generate a value of 
 
     (parse <<< normalise) midiString
 
-On the other hand, you may merely need to parse MIDI events (such as note on or note off) that emenate from a Web MIDI connection. In other words, you are connecting directly to a MIDI device through the browser and need to parse the stream of event messages as the instrument is played.  To do this, use:
+On the other hand, you may merely need to parse MIDI events (such as note on or note off) that emanate from a Web MIDI connection. In other words, you are connecting directly to a MIDI device through the browser and need to parse the stream of event messages as the instrument is played.  To do this, use:
 
     parseMidiEvent midiEvent
 
