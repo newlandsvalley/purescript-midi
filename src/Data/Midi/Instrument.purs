@@ -1,28 +1,23 @@
--- | An enumeration of the virtual instruments defined by MIDI together with a
--- | mapping to the instrument names defined in Benjamin Gleitzman's soundfont
--- | library - https://github.com/gleitz/midi-js-soundfonts.
--- | See the MIDI specification, page 150 - the General MIDI Sound Set.
 module Data.Midi.Instrument
   ( InstrumentName(..)
   , instrumentNames
   , gleitzmanName
   , gleitzmanNames
-  , read
-  ) where
+  , readGleitzman) where
 
-import Prelude (class Show, class Eq, class Ord, ($), map, show)
-import Data.Generic.Rep as G
-import Data.Generic.Rep.Eq as GEq
-import Data.Generic.Rep.Ord as GOrd
-import Data.Generic.Rep.Show as GShow
+-- | An enumeration of the virtual instruments defined by MIDI together with a
+-- | mapping to the instrument names defined in Benjamin Gleitzman's soundfont
+-- | library - https://github.com/gleitz/midi-js-soundfonts.
+-- | See the MIDI specification, page 150 - the General MIDI Sound Set.
+
+import Data.Array (cons, drop, elemIndex, index, length, filter)
 import Data.Foldable (foldr)
-import Data.String.CodeUnits (fromCharArray, toCharArray)
-import Data.Char.Unicode (isUpper, isDigit, toLower)
-import Data.Array (cons, drop)
 import Data.List (List(..), (:))
+import Data.Map (Map, fromFoldable, lookup)
+import Data.Maybe (Maybe(..), fromMaybe)
+import Data.String.CodeUnits (fromCharArray, toCharArray)
 import Data.Tuple (Tuple(..), fst, snd)
-import Data.Map (Map, fromFoldable, lookup) as Map
-import Data.Maybe (Maybe)
+import Prelude (class Eq, class Ord, class Show, compare, eq, map, ($), (<<<), (==), (>))
 
 -- | MIDI instrument names
 data InstrumentName =
@@ -70,22 +65,319 @@ data InstrumentName =
   | Violin              | VoiceOohs           | Whistle
   | Woodblock           | Xylophone
 
-derive instance genericInstrumentName :: G.Generic InstrumentName _
+-- deriving Eq gives an IncompleteExhaustivityCheck warning at about
+-- 100 elements in the enumeration and defining it explicitly
+-- dramatically reduces compile time
+-- deriving Ord is just disastrous in terms of code bloat
+-- and both hammer compile time
+
 instance eqInstrumentName :: Eq InstrumentName where
-  eq x y = GEq.genericEq x y
+  eq a b = eq (showName a) (showName b)
+
 instance ordInstrumentName :: Ord InstrumentName where
-  compare x y = GOrd.genericCompare x y
+  compare a b = compare (showName a) (showName b)
+
 instance showInstrumentName :: Show InstrumentName where
-  show x = GShow.genericShow x
+  show = showName
 
-
+-- | convert the instrument name to a Gleitxman string
+gleitzmanName :: InstrumentName -> String
+gleitzmanName =
+  toGleitzmanName <<< showName
 
 -- | Convert a MIDI instrument name to a Gleitzman name
 -- | for example ElectricPiano1 -> electric_piano_1
-gleitzmanName :: InstrumentName -> String
-gleitzmanName inst =
+showName :: InstrumentName -> String
+showName inst =
+  case inst of
+    Accordion -> "Accordion"
+    AcousticBass -> "AcousticBass"
+    AcousticGrandPiano -> "AcousticGrandPiano"
+    AcousticGuitarNylon -> "AcousticGuitarNylon"
+    AcousticGuitarSteel -> "AcousticGuitarSteel"
+    Agogo -> "Agogo"
+    AltoSax -> "AltoSax"
+    Applause -> "Applause"
+    Bagpipe -> "Bagpipe"
+    Banjo -> "Banjo"
+    BaritoneSax -> "BaritoneSax"
+    Bassoon -> "Bassoon"
+    BirdTweet -> "BirdTweet"
+    BlownBottle -> "BlownBottle"
+    BrassSection -> "BrassSection"
+    BreathNoise -> "BreathNoise"
+    BrightAcousticPiano -> "BrightAcousticPiano"
+    Celesta -> "Celesta"
+    Cello -> "Cello"
+    ChoirAahs -> "ChoirAahs"
+    ChurchOrgan -> "ChurchOrgan"
+    Clarinet -> "Clarinet"
+    Clavinet -> "Clavinet"
+    Contrabass -> "Contrabass"
+    DistortionGuitar -> "DistortionGuitar"
+    DrawbarOrgan -> "DrawbarOrgan"
+    Dulcimer -> "Dulcimer"
+    ElectricBassFinger -> "ElectricBassFinger"
+    ElectricBassPick -> "ElectricBassPick"
+    ElectricGrandPiano -> "ElectricGrandPiano"
+    ElectricGuitarClean -> "ElectricGuitarClean"
+    ElectricGuitarJazz -> "ElectricGuitarJazz"
+    ElectricGuitarMuted -> "ElectricGuitarMuted"
+    ElectricPiano1 -> "ElectricPiano1"
+    ElectricPiano2 -> "ElectricPiano2"
+    EnglishHorn -> "EnglishHorn"
+    Fiddle -> "Fiddle"
+    Flute -> "Flute"
+    FrenchHorn -> "FrenchHorn"
+    FretlessBass -> "FretlessBass"
+    Fx1Rain -> "Fx1Rain"
+    Fx2Soundtrack -> "Fx2Soundtrack"
+    Fx3Crystal -> "Fx3Crystal"
+    Fx4Atmosphere -> "Fx4Atmosphere"
+    Fx5Brightness -> "Fx5Brightness"
+    Fx6Goblins -> "Fx6Goblins"
+    Fx7Echoes -> "Fx7Echoes"
+    Fx8Scifi -> "Fx8Scifi"
+    Glockenspiel -> "Glockenspiel"
+    GuitarFretNoise -> "GuitarFretNoise"
+    GuitarHarmonics -> "GuitarHarmonics"
+    Gunshot -> "Gunshot"
+    Harmonica -> "Harmonica"
+    Harpsichord -> "Harpsichord"
+    Helicopter -> "Helicopter"
+    HonkytonkPiano -> "HonkytonkPiano"
+    Kalimba -> "Kalimba"
+    Koto -> "Koto"
+    Lead1Square -> "Lead1Square"
+    Lead2Sawtooth -> "Lead2Sawtooth"
+    Lead3Calliope -> "Lead3Calliope"
+    Lead4Chiff -> "Lead4Chiff"
+    Lead5Charang -> "Lead5Charang"
+    Lead6Voice -> "Lead6Voice"
+    Lead7Fifths -> "Lead7Fifths"
+    Lead8BassLead -> "Lead8BassLead"
+    Marimba -> "Marimba"
+    MelodicTom -> "MelodicTom"
+    MusicBox -> "MusicBox"
+    MutedTrumpet -> "MutedTrumpet"
+    Oboe -> "Oboe"
+    Ocarina -> "Ocarina"
+    OrchestraHit -> "OrchestraHit"
+    OrchestralHarp -> "OrchestralHarp"
+    OverdrivenGuitar -> "OverdrivenGuitar"
+    Pad1NewAge -> "Pad1NewAge"
+    Pad2Warm -> "Pad2Warm"
+    Pad3Polysynth -> "Pad3Polysynth"
+    Pad4Choir -> "Pad4Choir"
+    Pad5Bowed -> "Pad5Bowed"
+    Pad6Metallic -> "Pad6Metallic"
+    Pad7Halo -> "Pad7Halo"
+    Pad8Sweep -> "Pad8Sweep"
+    PanFlute -> "PanFlute"
+    PercussiveOrgan -> "PercussiveOrgan"
+    Piccolo -> "Piccolo"
+    PizzicatoStrings -> "PizzicatoStrings"
+    Recorder -> "Recorder"
+    ReedOrgan -> "ReedOrgan"
+    ReverseCymbal -> "ReverseCymbal"
+    RockOrgan -> "RockOrgan"
+    Seashore -> "Seashore"
+    Shakuhachi -> "Shakuhachi"
+    Shamisen -> "Shamisen"
+    Shanai -> "Shanai"
+    Sitar -> "Sitar"
+    SlapBass1 -> "SlapBass1"
+    SlapBass2 -> "SlapBass2"
+    SopranoSax -> "SopranoSax"
+    SteelDrums -> "SteelDrums"
+    StringEnsemble1 -> "StringEnsemble1"
+    StringEnsemble2 -> "StringEnsemble2"
+    SynthBass1 -> "SynthBass1"
+    SynthBass2 -> "SynthBass2"
+    SynthBrass1 -> "SynthBrass1"
+    SynthBrass2 -> "SynthBrass2"
+    SynthChoir -> "SynthChoir"
+    SynthDrum -> "SynthDrum"
+    SynthStrings1 -> "SynthStrings1"
+    SynthStrings2 -> "SynthStrings2"
+    TaikoDrum -> "TaikoDrum"
+    TangoAccordion -> "TangoAccordion"
+    TelephoneRing -> "TelephoneRing"
+    TenorSax -> "TenorSax"
+    Timpani -> "Timpani"
+    TinkleBell -> "TinkleBell"
+    TremoloStrings -> "TremoloStrings"
+    Trombone -> "Trombone"
+    Trumpet -> "Trumpet"
+    Tuba -> "Tuba"
+    TubularBells -> "TubularBells"
+    Vibraphone -> "Vibraphone"
+    Viola -> "Viola"
+    Violin -> "Violin"
+    VoiceOohs -> "VoiceOohs"
+    Whistle -> "Whistle"
+    Woodblock -> "Woodblock"
+    Xylophone -> "Xylophone"
+
+-- | the set of supported instruments
+instrumentNames :: List InstrumentName
+instrumentNames =
+  map snd mapping
+
+-- | the set of supported instruments, using the Gleitzman names
+gleitzmanNames :: List String
+gleitzmanNames =
+  map fst mapping
+
+-- | read a Gleitzman instrument name amd attempt to convert to a MIDI instrument.
+readGleitzman :: String -> Maybe InstrumentName
+readGleitzman g =
+  lookup g gleitzmanNamesMap
+
+
+gleitzmanNamesMap :: Map String InstrumentName
+gleitzmanNamesMap =
+  let
+    f :: Tuple String InstrumentName -> Tuple String InstrumentName
+    f (Tuple s i) = Tuple (toGleitzmanName s) i
+  in
+    fromFoldable $ map f mapping
+
+mapping :: List (Tuple String InstrumentName)
+mapping =
+     Tuple "Accordion" Accordion
+   : Tuple "AcousticBass" AcousticBass
+   : Tuple "AcousticGrandPiano" AcousticGrandPiano
+   : Tuple "AcousticGuitarNylon" AcousticGuitarNylon
+   : Tuple "AcousticGuitarSteel" AcousticGuitarSteel
+   : Tuple "Agogo" Agogo
+   : Tuple "AltoSax" AltoSax
+   : Tuple "Applause" Applause
+   : Tuple "Bagpipe" Bagpipe
+   : Tuple "Banjo" Banjo
+   : Tuple "BaritoneSax" BaritoneSax
+   : Tuple "Bassoon" Bassoon
+   : Tuple "BirdTweet" BirdTweet
+   : Tuple "BlownBottle" BlownBottle
+   : Tuple "BrassSection" BrassSection
+   : Tuple "BreathNoise" BreathNoise
+   : Tuple "BrightAcousticPiano" BrightAcousticPiano
+   : Tuple "Celesta" Celesta
+   : Tuple "Cello" Cello
+   : Tuple "ChoirAahs" ChoirAahs
+   : Tuple "ChurchOrgan" ChurchOrgan
+   : Tuple "Clarinet" Clarinet
+   : Tuple "Clavinet" Clavinet
+   : Tuple "Contrabass" Contrabass
+   : Tuple "DistortionGuitar" DistortionGuitar
+   : Tuple "DrawbarOrgan" DrawbarOrgan
+   : Tuple "Dulcimer" Dulcimer
+   : Tuple "ElectricBassFinger" ElectricBassFinger
+   : Tuple "ElectricBassPick" ElectricBassPick
+   : Tuple "ElectricGrandPiano" ElectricGrandPiano
+   : Tuple "ElectricGuitarClean" ElectricGuitarClean
+   : Tuple "ElectricGuitarJazz" ElectricGuitarJazz
+   : Tuple "ElectricGuitarMuted" ElectricGuitarMuted
+   : Tuple "ElectricPiano1" ElectricPiano1
+   : Tuple "ElectricPiano2" ElectricPiano2
+   : Tuple "EnglishHorn" EnglishHorn
+   : Tuple "Fiddle" Fiddle
+   : Tuple "Flute" Flute
+   : Tuple "FrenchHorn" FrenchHorn
+   : Tuple "FretlessBass" FretlessBass
+   : Tuple "Fx1Rain" Fx1Rain
+   : Tuple "Fx2Soundtrack" Fx2Soundtrack
+   : Tuple "Fx3Crystal" Fx3Crystal
+   : Tuple "Fx4Atmosphere" Fx4Atmosphere
+   : Tuple "Fx5Brightness" Fx5Brightness
+   : Tuple "Fx6Goblins" Fx6Goblins
+   : Tuple "Fx7Echoes" Fx7Echoes
+   : Tuple "Fx8Scifi" Fx8Scifi
+   : Tuple "Glockenspiel" Glockenspiel
+   : Tuple "GuitarFretNoise" GuitarFretNoise
+   : Tuple "GuitarHarmonics" GuitarHarmonics
+   : Tuple "Gunshot" Gunshot
+   : Tuple "Harmonica" Harmonica
+   : Tuple "Harpsichord" Harpsichord
+   : Tuple "Helicopter" Helicopter
+   : Tuple "HonkytonkPiano" HonkytonkPiano
+   : Tuple "Kalimba" Kalimba
+   : Tuple "Koto" Koto
+   : Tuple "Lead1Square" Lead1Square
+   : Tuple "Lead2Sawtooth" Lead2Sawtooth
+   : Tuple "Lead3Calliope" Lead3Calliope
+   : Tuple "Lead4Chiff" Lead4Chiff
+   : Tuple "Lead5Charang" Lead5Charang
+   : Tuple "Lead6Voice" Lead6Voice
+   : Tuple "Lead7Fifths" Lead7Fifths
+   : Tuple "Lead8BassLead" Lead8BassLead
+   : Tuple "Marimba" Marimba
+   : Tuple "MelodicTom" MelodicTom
+   : Tuple "MusicBox" MusicBox
+   : Tuple "MutedTrumpet" MutedTrumpet
+   : Tuple "Oboe" Oboe
+   : Tuple "Ocarina" Ocarina
+   : Tuple "OrchestraHit" OrchestraHit
+   : Tuple "OrchestralHarp" OrchestralHarp
+   : Tuple "OverdrivenGuitar" OverdrivenGuitar
+   : Tuple "Pad1NewAge" Pad1NewAge
+   : Tuple "Pad2Warm" Pad2Warm
+   : Tuple "Pad3Polysynth" Pad3Polysynth
+   : Tuple "Pad4Choir" Pad4Choir
+   : Tuple "Pad5Bowed" Pad5Bowed
+   : Tuple "Pad6Metallic" Pad6Metallic
+   : Tuple "Pad7Halo" Pad7Halo
+   : Tuple "Pad8Sweep" Pad8Sweep
+   : Tuple "PanFlute" PanFlute
+   : Tuple "PercussiveOrgan" PercussiveOrgan
+   : Tuple "Piccolo" Piccolo
+   : Tuple "PizzicatoStrings" PizzicatoStrings
+   : Tuple "Recorder" Recorder
+   : Tuple "ReedOrgan" ReedOrgan
+   : Tuple "ReverseCymbal" ReverseCymbal
+   : Tuple "RockOrgan" RockOrgan
+   : Tuple "Seashore" Seashore
+   : Tuple "Shakuhachi" Shakuhachi
+   : Tuple "Shamisen" Shamisen
+   : Tuple "Shanai" Shanai
+   : Tuple "Sitar" Sitar
+   : Tuple "SlapBass1" SlapBass1
+   : Tuple "SlapBass2" SlapBass2
+   : Tuple "SopranoSax" SopranoSax
+   : Tuple "SteelDrums" SteelDrums
+   : Tuple "StringEnsemble1" StringEnsemble1
+   : Tuple "StringEnsemble2" StringEnsemble2
+   : Tuple "SynthBrass2" SynthBrass2
+   : Tuple "SynthChoir" SynthChoir
+   : Tuple "SynthDrum" SynthDrum
+   : Tuple "SynthStrings1" SynthStrings1
+   : Tuple "SynthStrings2" SynthStrings2
+   : Tuple "TaikoDrum" TaikoDrum
+   : Tuple "TangoAccordion" TangoAccordion
+   : Tuple "TelephoneRing" TelephoneRing
+   : Tuple "TenorSax" TenorSax
+   : Tuple "Timpani" Timpani
+   : Tuple "TinkleBell" TinkleBell
+   : Tuple "TremoloStrings" TremoloStrings
+   : Tuple "Trombone" Trombone
+   : Tuple "Trumpet" Trumpet
+   : Tuple "Tuba" Tuba
+   : Tuple "TubularBells" TubularBells
+   : Tuple "Vibraphone" Vibraphone
+   : Tuple "Viola" Viola
+   : Tuple "Violin" Violin
+   : Tuple "VoiceOohs" VoiceOohs
+   : Tuple "Whistle" Whistle
+   : Tuple "Woodblock" Woodblock
+   : Tuple "Xylophone" Xylophone
+   : Nil
+
+-- | Convert a 'show' name to a Gleitzman name
+-- | for example ElectricPiano1 -> electric_piano_1
+toGleitzmanName :: String -> String
+toGleitzmanName inst =
   -- the leading capital induces an unwanted underscore which we must drop
-  fromCharArray $ drop 1 $ foldr f [] (toCharArray $ show inst)
+  fromCharArray $ drop 1 $ foldr f [] (toCharArray inst)
     where
       f :: Char -> Array Char -> Array Char
       f c acc =
@@ -97,155 +389,39 @@ gleitzmanName inst =
         else
           cons (toLower c) acc
 
--- | the set of supported instruments, using the Gleitzman names
-gleitzmanNames :: List String
-gleitzmanNames =
-  map fst mapping
+-- the Gleitzman file names are all ASCII.  We therefore use ASCII only
+-- versions of isUpper, isDigit and toLower
+-- this seems to save us about 300K of generated code!
 
--- | the set of supported instruments
-instrumentNames :: List InstrumentName
-instrumentNames =
-  map snd mapping
+asciiUpper :: Array Char
+asciiUpper =
+  ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+   'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 
--- | read a Gleitzman instrument name amd attempt to convert to a MIDI instrument.
-read :: String -> Maybe InstrumentName
-read g =
-  Map.lookup g namesMap
+asciiLower :: Array Char
+asciiLower =
+  ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+   'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
--- all this rigmarole is because there's no generic deriving for Read or Enum
--- at the moment in purescript.  Replace this if and when it arrives.
-namesMap :: Map.Map String InstrumentName
-namesMap =
- Map.fromFoldable mapping
+asciiDigit :: Array Char
+asciiDigit =
+  ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
-mapping :: List (Tuple String InstrumentName)
-mapping =
-     Tuple (gleitzmanName Accordion ) Accordion
-   : Tuple (gleitzmanName AcousticBass) AcousticBass
-   : Tuple (gleitzmanName AcousticGrandPiano) AcousticGrandPiano
-   : Tuple (gleitzmanName AcousticGuitarNylon) AcousticGuitarNylon
-   : Tuple (gleitzmanName AcousticGuitarSteel) AcousticGuitarSteel
-   : Tuple (gleitzmanName Agogo) Agogo
-   : Tuple (gleitzmanName AltoSax) AltoSax
-   : Tuple (gleitzmanName Applause) Applause
-   : Tuple (gleitzmanName Bagpipe) Bagpipe
-   : Tuple (gleitzmanName Banjo) Banjo
-   : Tuple (gleitzmanName BaritoneSax) BaritoneSax
-   : Tuple (gleitzmanName Bassoon) Bassoon
-   : Tuple (gleitzmanName BirdTweet) BirdTweet
-   : Tuple (gleitzmanName BlownBottle) BlownBottle
-   : Tuple (gleitzmanName BrassSection) BrassSection
-   : Tuple (gleitzmanName BreathNoise) BreathNoise
-   : Tuple (gleitzmanName BrightAcousticPiano) BrightAcousticPiano
-   : Tuple (gleitzmanName Celesta) Celesta
-   : Tuple (gleitzmanName Cello) Cello
-   : Tuple (gleitzmanName ChoirAahs) ChoirAahs
-   : Tuple (gleitzmanName ChurchOrgan) ChurchOrgan
-   : Tuple (gleitzmanName Clarinet) Clarinet
-   : Tuple (gleitzmanName Clavinet) Clavinet
-   : Tuple (gleitzmanName Contrabass) Contrabass
-   : Tuple (gleitzmanName DistortionGuitar) DistortionGuitar
-   : Tuple (gleitzmanName DrawbarOrgan) DrawbarOrgan
-   : Tuple (gleitzmanName Dulcimer) Dulcimer
-   : Tuple (gleitzmanName ElectricBassFinger) ElectricBassFinger
-   : Tuple (gleitzmanName ElectricBassPick) ElectricBassPick
-   : Tuple (gleitzmanName ElectricGrandPiano) ElectricGrandPiano
-   : Tuple (gleitzmanName ElectricGuitarClean) ElectricGuitarClean
-   : Tuple (gleitzmanName ElectricGuitarJazz) ElectricGuitarJazz
-   : Tuple (gleitzmanName ElectricGuitarMuted) ElectricGuitarMuted
-   : Tuple (gleitzmanName ElectricPiano1) ElectricPiano1
-   : Tuple (gleitzmanName ElectricPiano2) ElectricPiano2
-   : Tuple (gleitzmanName EnglishHorn) EnglishHorn
-   : Tuple (gleitzmanName Fiddle) Fiddle
-   : Tuple (gleitzmanName Flute) Flute
-   : Tuple (gleitzmanName FrenchHorn) FrenchHorn
-   : Tuple (gleitzmanName FretlessBass) FretlessBass
-   : Tuple (gleitzmanName Fx1Rain) Fx1Rain
-   : Tuple (gleitzmanName Fx2Soundtrack) Fx2Soundtrack
-   : Tuple (gleitzmanName Fx3Crystal) Fx3Crystal
-   : Tuple (gleitzmanName Fx4Atmosphere) Fx4Atmosphere
-   : Tuple (gleitzmanName Fx5Brightness) Fx5Brightness
-   : Tuple (gleitzmanName Fx6Goblins) Fx6Goblins
-   : Tuple (gleitzmanName Fx7Echoes) Fx7Echoes
-   : Tuple (gleitzmanName Fx8Scifi) Fx8Scifi
-   : Tuple (gleitzmanName Glockenspiel) Glockenspiel
-   : Tuple (gleitzmanName GuitarFretNoise) GuitarFretNoise
-   : Tuple (gleitzmanName GuitarHarmonics) GuitarHarmonics
-   : Tuple (gleitzmanName Gunshot) Gunshot
-   : Tuple (gleitzmanName Harmonica) Harmonica
-   : Tuple (gleitzmanName Harpsichord) Harpsichord
-   : Tuple (gleitzmanName Helicopter) Helicopter
-   : Tuple (gleitzmanName HonkytonkPiano) HonkytonkPiano
-   : Tuple (gleitzmanName Kalimba) Kalimba
-   : Tuple (gleitzmanName Koto) Koto
-   : Tuple (gleitzmanName Lead1Square) Lead1Square
-   : Tuple (gleitzmanName Lead2Sawtooth) Lead2Sawtooth
-   : Tuple (gleitzmanName Lead3Calliope) Lead3Calliope
-   : Tuple (gleitzmanName Lead4Chiff) Lead4Chiff
-   : Tuple (gleitzmanName Lead5Charang) Lead5Charang
-   : Tuple (gleitzmanName Lead6Voice) Lead6Voice
-   : Tuple (gleitzmanName Lead7Fifths) Lead7Fifths
-   : Tuple (gleitzmanName Lead8BassLead) Lead8BassLead
-   : Tuple (gleitzmanName Marimba) Marimba
-   : Tuple (gleitzmanName MelodicTom) MelodicTom
-   : Tuple (gleitzmanName MusicBox) MusicBox
-   : Tuple (gleitzmanName MutedTrumpet) MutedTrumpet
-   : Tuple (gleitzmanName Oboe) Oboe
-   : Tuple (gleitzmanName Ocarina) Ocarina
-   : Tuple (gleitzmanName OrchestraHit) OrchestraHit
-   : Tuple (gleitzmanName OrchestralHarp) OrchestralHarp
-   : Tuple (gleitzmanName OverdrivenGuitar) OverdrivenGuitar
-   : Tuple (gleitzmanName Pad1NewAge) Pad1NewAge
-   : Tuple (gleitzmanName Pad2Warm) Pad2Warm
-   : Tuple (gleitzmanName Pad3Polysynth) Pad3Polysynth
-   : Tuple (gleitzmanName Pad4Choir) Pad4Choir
-   : Tuple (gleitzmanName Pad5Bowed) Pad5Bowed
-   : Tuple (gleitzmanName Pad6Metallic) Pad6Metallic
-   : Tuple (gleitzmanName Pad7Halo) Pad7Halo
-   : Tuple (gleitzmanName Pad8Sweep) Pad8Sweep
-   : Tuple (gleitzmanName PanFlute) PanFlute
-   : Tuple (gleitzmanName PercussiveOrgan) PercussiveOrgan
-   : Tuple (gleitzmanName Piccolo) Piccolo
-   : Tuple (gleitzmanName PizzicatoStrings) PizzicatoStrings
-   : Tuple (gleitzmanName Recorder) Recorder
-   : Tuple (gleitzmanName ReedOrgan) ReedOrgan
-   : Tuple (gleitzmanName ReverseCymbal) ReverseCymbal
-   : Tuple (gleitzmanName RockOrgan) RockOrgan
-   : Tuple (gleitzmanName Seashore) Seashore
-   : Tuple (gleitzmanName Shakuhachi) Shakuhachi
-   : Tuple (gleitzmanName Shamisen) Shamisen
-   : Tuple (gleitzmanName Shanai) Shanai
-   : Tuple (gleitzmanName Sitar) Sitar
-   : Tuple (gleitzmanName SlapBass1) SlapBass1
-   : Tuple (gleitzmanName SlapBass2) SlapBass2
-   : Tuple (gleitzmanName SopranoSax) SopranoSax
-   : Tuple (gleitzmanName SteelDrums) SteelDrums
-   : Tuple (gleitzmanName StringEnsemble1) StringEnsemble1
-   : Tuple (gleitzmanName StringEnsemble2) StringEnsemble2
-   : Tuple (gleitzmanName SynthBass1) SynthBass1
-   : Tuple (gleitzmanName SynthBass2) SynthBass2
-   : Tuple (gleitzmanName SynthBrass1) SynthBrass1
-   : Tuple (gleitzmanName SynthBrass2) SynthBrass2
-   : Tuple (gleitzmanName SynthChoir) SynthChoir
-   : Tuple (gleitzmanName SynthDrum) SynthDrum
-   : Tuple (gleitzmanName SynthStrings1) SynthStrings1
-   : Tuple (gleitzmanName SynthStrings2) SynthStrings2
-   : Tuple (gleitzmanName TaikoDrum) TaikoDrum
-   : Tuple (gleitzmanName TangoAccordion) TangoAccordion
-   : Tuple (gleitzmanName TelephoneRing) TelephoneRing
-   : Tuple (gleitzmanName TenorSax) TenorSax
-   : Tuple (gleitzmanName Timpani) Timpani
-   : Tuple (gleitzmanName TinkleBell) TinkleBell
-   : Tuple (gleitzmanName TremoloStrings) TremoloStrings
-   : Tuple (gleitzmanName Trombone) Trombone
-   : Tuple (gleitzmanName Trumpet) Trumpet
-   : Tuple (gleitzmanName Tuba) Tuba
-   : Tuple (gleitzmanName TubularBells) TubularBells
-   : Tuple (gleitzmanName Vibraphone) Vibraphone
-   : Tuple (gleitzmanName Viola) Viola
-   : Tuple (gleitzmanName Violin) Violin
-   : Tuple (gleitzmanName VoiceOohs) VoiceOohs
-   : Tuple (gleitzmanName Whistle) Whistle
-   : Tuple (gleitzmanName Woodblock) Woodblock
-   : Tuple (gleitzmanName Xylophone) Xylophone
-   : Nil
+isUpper :: Char -> Boolean
+isUpper c =
+  contains asciiUpper c
+
+isDigit :: Char -> Boolean
+isDigit c =
+  contains asciiDigit c
+
+toLower :: Char -> Char
+toLower c =
+  case (elemIndex c asciiUpper) of
+    Just ix ->
+      fromMaybe c $ index asciiLower ix
+    _ -> c
+
+contains :: ∀ a. Eq a => Array a -> a -> Boolean
+contains xs x =
+  (length $ filter (\y -> y == x) xs) > 0

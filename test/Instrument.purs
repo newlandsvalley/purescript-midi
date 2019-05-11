@@ -12,7 +12,7 @@ import Test.QuickCheck.Arbitrary (class Arbitrary)
 import Test.QuickCheck (Result(), (===))
 import Test.Unit.QuickCheck (quickCheck)
 import Test.QuickCheck.Gen (Gen, elements)
-import Data.Midi.Instrument (InstrumentName(..), gleitzmanName, instrumentNames, read)
+import Data.Midi.Instrument (InstrumentName(..), gleitzmanName, instrumentNames, readGleitzman)
 
 newtype TestInstrument = TestInstrument InstrumentName
 
@@ -31,7 +31,7 @@ arbTestInstrument =
 roundTripInstrumentProperty :: TestInstrument -> Result
 roundTripInstrumentProperty (TestInstrument i) =
   let
-    instrument = read $ gleitzmanName i
+    instrument = readGleitzman $ gleitzmanName i
   in
     (Just i :: Maybe InstrumentName) === instrument
 
@@ -39,6 +39,6 @@ instrumentChecksSuite :: forall t. Free TestF Unit
 instrumentChecksSuite = do
   suite "instrument" do
     test "unknown" do
-      Assert.equal Nothing (read "unknown")
+      Assert.equal Nothing (readGleitzman "unknown")
     test "round trip instrument name" do
       quickCheck roundTripInstrumentProperty
