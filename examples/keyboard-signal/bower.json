@@ -4,6 +4,6 @@
   "dependencies": {
     "purescript-unicode": "^4.0.1",
     "purescript-console": "^4.1.0",
-    "newlandsvalley/purescript-midi": "^2.0.0"
+    "purescript-midi": "https://github.com/newlandsvalley/purescript-midi.git#master"
   }
 }

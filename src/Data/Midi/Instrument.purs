@@ -227,7 +227,7 @@ instrumentNames =
 -- | the set of supported instruments, using the Gleitzman names
 gleitzmanNames :: List String
 gleitzmanNames =
-  map fst mapping
+  map (toGleitzmanName <<< fst) mapping
 
 -- | read a Gleitzman instrument name amd attempt to convert to a MIDI instrument.
 readGleitzman :: String -> Maybe InstrumentName
@@ -347,6 +347,9 @@ mapping =
    : Tuple "SteelDrums" SteelDrums
    : Tuple "StringEnsemble1" StringEnsemble1
    : Tuple "StringEnsemble2" StringEnsemble2
+   : Tuple "SynthBass1" SynthBass1
+   : Tuple "SynthBass2" SynthBass2
+   : Tuple "SynthBrass1" SynthBrass1
    : Tuple "SynthBrass2" SynthBrass2
    : Tuple "SynthChoir" SynthChoir
    : Tuple "SynthDrum" SynthDrum
