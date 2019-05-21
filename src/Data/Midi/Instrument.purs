@@ -80,13 +80,15 @@ instance ordInstrumentName :: Ord InstrumentName where
 instance showInstrumentName :: Show InstrumentName where
   show = showName
 
--- | convert the instrument name to a Gleitxman string
+-- | convert a MIDI instrument name to a Gleitxman string
+-- | for example ElectricPiano1 -> electric_piano_1
 gleitzmanName :: InstrumentName -> String
 gleitzmanName =
   toGleitzmanName <<< showName
 
--- | Convert a MIDI instrument name to a Gleitzman name
--- | for example ElectricPiano1 -> electric_piano_1
+-- | Simple show function with a one-to-one correspondence
+-- | between the characters that make up the enumerated type
+-- | and the String representation.
 showName :: InstrumentName -> String
 showName inst =
   case inst of
