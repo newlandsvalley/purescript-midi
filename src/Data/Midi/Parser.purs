@@ -24,7 +24,8 @@ import Data.Unfoldable (replicateA)
 import Prelude (Unit, unit, ($), (<$>), (<$), (<*>), (*>), (+), (-), (>), (<), (==), (>=), (<=), (&&), (>>=), (>>>), (<<<), (<>), map, pure, show, void)
 import Text.Parsing.StringParser (Parser, runParser, try, fail)
 import Text.Parsing.StringParser.Combinators (choice, many, many1Till, (<?>))
-import Text.Parsing.StringParser.String (anyChar, satisfy, string, char, noneOf)
+-- import Text.Parsing.StringParser.String (anyChar, satisfy, string, char, noneOf)
+import Text.Parsing.StringParser.CodePoints (anyChar, satisfy, string, char, noneOf)
 
 {- debugging utilities
 
