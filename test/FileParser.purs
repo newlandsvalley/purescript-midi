@@ -1,10 +1,9 @@
 module Test.FileParser (parserSuite) where
 
-import Prelude (Unit, bind, discard, show, ($), (<<<), (<>))
+import Prelude (Unit, bind, discard, ($), (<<<))
 import Data.Midi (Recording)
 import Data.Midi.Parser (normalise, parse)
 import Node.Path as Path
-import Effect.Exception (Error)
 import Effect.Class (liftEffect)
 import Control.Monad.Free (Free)
 import Data.Either (Either(..))
@@ -43,12 +42,13 @@ assertParses fileName =
 
 canParse :: String -> Test
 canParse str =
-  case fullParse str of
-    Right _ ->
-      success
-    Left err ->
-      failure (err)
-        where
-          fullParse :: String -> Either String Recording
-          fullParse s =
-            (parse <<< normalise) s
+  let
+    fullParse :: String -> Either String Recording
+    fullParse s =
+      (parse <<< normalise) s
+  in
+    case fullParse str of
+      Right _ ->
+        success
+      Left err ->
+        failure (err)

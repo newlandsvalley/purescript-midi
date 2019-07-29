@@ -57,7 +57,7 @@ roundTripGleitzmanProperty (TestGleitzman s) =
   in
     (Just s :: Maybe String) === name
 
-instrumentChecksSuite :: forall t. Free TestF Unit
+instrumentChecksSuite :: Free TestF Unit
 instrumentChecksSuite = do
   suite "instrument" do
     test "unknown" do
