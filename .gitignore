@@ -6,3 +6,5 @@
 /examples/abcplayer/
 /.psc*
 /.psa*
+/.purs-repl
+/.spago/
