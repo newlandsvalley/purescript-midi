@@ -1,5 +1,9 @@
 # Changelog
 
+### Version 2.2.0 (2019-05-13)
+
+* Reduce code bloat in Midi Instruments 
+
 ### Version 2.0.0
 
 * PS Compiler 0.12
