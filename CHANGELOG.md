@@ -1,8 +1,12 @@
 # Changelog
 
+### Version 2.3.0 (2020-11-18)
+
+* Add spago
+
 ### Version 2.2.0 (2019-05-13)
 
-* Reduce code bloat in Midi Instruments 
+* Reduce code bloat in Midi Instruments
 
 ### Version 2.0.0
 
