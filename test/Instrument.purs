@@ -3,6 +3,7 @@ module Test.Instrument (instrumentChecksSuite) where
 
 import Prelude (Unit, ($), (<$>), discard, map)
 import Data.List (toUnfoldable)
+import Data.Array.NonEmpty (fromNonEmpty)
 import Data.NonEmpty ((:|))
 import Data.Maybe (Maybe(..))
 import Control.Monad.Free (Free)
@@ -27,12 +28,12 @@ instance testGleitzmanarb :: Arbitrary TestGleitzman where
 
 arbInstrumentName :: Gen InstrumentName
 arbInstrumentName =
-  elements $
+  elements $ fromNonEmpty $
     AcousticGrandPiano :| toUnfoldable instrumentNames
 
 arbGleitzmanName :: Gen String
 arbGleitzmanName =
-  elements $
+  elements $ fromNonEmpty $
     "acoustic_grand_piano" :| toUnfoldable gleitzmanNames
 
 arbTestInstrument :: Gen TestInstrument

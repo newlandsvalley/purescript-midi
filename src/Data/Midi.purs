@@ -19,9 +19,9 @@ import Data.List (List)
 import Data.List.NonEmpty (NonEmptyList) as Nel
 import Data.Maybe (Maybe)
 import Data.Generic.Rep
-import Data.Generic.Rep.Eq (genericEq)
-import Data.Generic.Rep.Ord (genericCompare)
-import Data.Generic.Rep.Show (genericShow)
+import Data.Eq.Generic (genericEq)
+import Data.Ord.Generic (genericCompare)
+import Data.Show.Generic (genericShow)
 
 -- | A Tick represents a MIDI time increment.  See the MIDI Specification,
 -- | page 135 - delta-time.

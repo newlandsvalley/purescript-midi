@@ -6,7 +6,6 @@ You can edit this file as you like.
 , dependencies =
   [
   , "effect"
-  , "generics-rep"
   , "integers"
   , "lists"
   , "prelude"

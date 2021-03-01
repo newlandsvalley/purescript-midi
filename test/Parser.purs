@@ -5,11 +5,12 @@ import Data.Midi
 
 import Control.Monad.Free (Free)
 import Data.Array (singleton, fromFoldable) as Array
+import Data.Array.NonEmpty (NonEmptyArray, fromNonEmpty)
 import Data.Char (fromCharCode)
 import Data.Either (Either(..))
 import Data.List (List(..), (:), fromFoldable, toUnfoldable)
-import Data.List.NonEmpty (NonEmptyList, cons, fromList, singleton)
-import Data.NonEmpty (NonEmpty, (:|))
+import Data.List.NonEmpty (NonEmptyList(..), cons, fromList, singleton)
+import Data.NonEmpty ((:|))
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Midi.Generate as Generate
 import Data.Midi.Parser (parse, parseMidiEvent, parseMidiMessage)
@@ -80,7 +81,7 @@ arbTrackFormat trackCount =
 
 arbSysExFlavour :: Gen SysExFlavour
 arbSysExFlavour =
-  elements $
+  elements $ fromNonEmpty $ 
     F0 :| [ F0, F7 ]
 
 -- | because velocity 0 means NoteOff, we don't want to issue
@@ -269,11 +270,16 @@ arbKeySignature =
 -- very arbitrary arbitraries!
 arbTimeSignature :: Gen Event
 arbTimeSignature =
-  TimeSignature
-    <$>  (chooseInt 1 100)  -- numerator
-    <*>  elements (4 :| [1,2,4,8,16,32,64,128 ]) -- denominator
-    <*>  (pure 24)          -- clock count
-    <*>  (chooseInt 1 64)   -- 32nd notes per quarter note
+  let 
+    powersOfTwo :: NonEmptyArray Int 
+    powersOfTwo = 
+      fromNonEmpty (4 :| [1,2,4,8,16,32,64,128 ])
+  in
+    TimeSignature
+      <$>  (chooseInt 1 100)    -- numerator
+      <*>  elements powersOfTwo -- denominator
+      <*>  (pure 24)            -- clock count
+      <*>  (chooseInt 1 64)     -- 32nd notes per quarter note
 
 arbSequencerSpecific  :: Gen Event
 arbSequencerSpecific =
@@ -334,19 +340,20 @@ weightedSysExEvent :: Generate.Context -> Tuple Number (Gen Event)
 weightedSysExEvent ctx =
   Tuple 20.0 $ arbSysEx ctx
 
-commonEvents :: NonEmpty Array (Gen Event)
+commonEvents :: NonEmptyArray (Gen Event)
 commonEvents =
-  arbNoteOn :| channelEvents
+  fromNonEmpty $ arbNoteOn :| channelEvents
 
-allEvents :: Generate.Context -> NonEmpty Array (Gen Event)
+allEvents :: Generate.Context -> NonEmptyArray (Gen Event)
 allEvents ctx =
-  arbNoteOn :| (channelEvents <> Array.singleton (arbSysEx ctx) <> metaEvents)
+  fromNonEmpty $ arbNoteOn :| (channelEvents <> Array.singleton (arbSysEx ctx) <> metaEvents)
 
-weightedEvents :: Generate.Context -> NonEmpty List (Tuple Number (Gen Event))
+weightedEvents :: Generate.Context -> NonEmptyList (Tuple Number (Gen Event))
 weightedEvents ctx =
-  (Tuple 1.0 arbNoteOn)
-     :|
-       ( weightedChannelEvents
+  NonEmptyList $
+    (Tuple 1.0 arbNoteOn)
+      :|
+        ( weightedChannelEvents
          <> ( (weightedSysExEvent ctx) : Nil)
          <> weightedMetaEvents
         )
@@ -374,7 +381,8 @@ arbTestMessage =
 arbTrack :: Gen Track
 arbTrack =
   do
-    count <- chooseInt 0 256
+    count <- chooseInt 0 100
+    -- this doesn't seem to terminate when testing with spago
     --  count <- chooseInt 0 250
     Track <$> listOf count arbMessage
 

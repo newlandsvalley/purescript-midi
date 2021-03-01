@@ -12,7 +12,7 @@ see also:
  [ABC Editor](https://github.com/newlandsvalley/purescript-abc-editor),
  [PureScript School of Music Editor](https://github.com/newlandsvalley/purescript-school-of-music/tree/master/editor) etc.
 
-### v1.2.0 (PureScript 0.11)
+### v1.2.0 (deprecated - PureScript 0.11)
 
 * __midifile__ load MIDI from the local file system and then parse it.
 * __midiurl__ loading MIDI from a URL and then parse it.
