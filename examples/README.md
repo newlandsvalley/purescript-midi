@@ -3,7 +3,7 @@ purescript-midi examples
 
 All purescript-midi examples use purescript-pux as the web framework although most of the external projects (other than MIDI Keyboard) use Halogen. 
 
-### v2.0.0 (current)
+### v2.0.0 (PureScript 0.12)
 
 * __keyboard-signal__ log web-midi messages.
 

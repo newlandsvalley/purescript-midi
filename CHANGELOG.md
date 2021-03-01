@@ -1,5 +1,10 @@
 # Changelog
 
+### Latest
+
+* PureScript 0.14.0
+* Remove outdated examples
+
 ### Version 2.3.0 (2020-11-18)
 
 * Add spago
