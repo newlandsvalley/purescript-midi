@@ -21,14 +21,6 @@
     "purescript-lists": "^6.0.0",
     "purescript-string-parsers": "^6.0.0",
     "purescript-integers": "^5.0.0",
-    "purescript-signal": "^11.0.3"
-  },
-  "devDependencies": {
-    "purescript-psci-support": "^5.0.0",
-    "purescript-node-fs-aff": "^7.0.0",
-    "purescript-node-buffer": "^7.0.0",
-    "purescript-test-unit": "^15.0.0",
-    "purescript-quickcheck": "^7.0.0",
-    "purescript-assert": "^5.0.0"
+    "purescript-signal": "^12.0.1"
   }
 }
