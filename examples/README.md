@@ -1,9 +1,10 @@
 purescript-midi examples
 ========================
 
-All purescript-midi examples use purescript-pux as the web framework although most of the external projects (other than MIDI Keyboard) use Halogen. 
+These examples are all built against old versions of the PS compiler and mostly use Pux rather than Halogen.  Whilst they will no longer be maintained against newer compiler releases, they nevertheless indicate how the MIDI library maight be used.  Up to date examples are maintained in separate repositories - for example [purescript-midi-keyboard](https://github.com/newlandsvalley/purescript-midi-keyboard).
 
-### v2.0.0 (PureScript 0.12)
+
+### v2.0.0 (deprecated - PureScript 0.12)
 
 * __keyboard-signal__ log web-midi messages.
 

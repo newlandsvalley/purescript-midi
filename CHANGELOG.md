@@ -1,9 +1,9 @@
 # Changelog
 
-### Latest
+### Version 2.4.0 (2021-03-02)
 
-* PureScript 0.14.0
-* Remove outdated examples
+* PS Compiler 0.14.0
+* Deprecate examples which only exist for old versions of the PS compiler
 
 ### Version 2.3.0 (2020-11-18)
 
