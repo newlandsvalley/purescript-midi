@@ -17,10 +17,14 @@
     "url": "https://github.com/newlandsvalley/purescript-midi.git"
   },
   "dependencies": {
-    "purescript-prelude": "^5.0.0",
-    "purescript-lists": "^6.0.0",
-    "purescript-string-parsers": "^6.0.0",
+    "purescript-prelude": "^5.0.1",
+    "purescript-lists": "^6.1.0",
+    "purescript-string-parsers": "^7.0.0",
     "purescript-integers": "^5.0.0",
-    "purescript-signal": "^12.0.1"
+    "purescript-signal": "^12.0.1",
+    "purescript-quickcheck": "^7.1.0",
+    "purescript-test-unit": "^16.0.0",
+    "purescript-node-buffer": "^7.0.1",
+    "purescript-node-fs-aff": "^7.0.0"
   }
 }

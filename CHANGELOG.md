@@ -1,5 +1,10 @@
 # Changelog
 
+### Version 2.5.0 (2022-03-11)
+
+* PS Compiler 0.14.7
+* Enforced upgrade because of breaking changes in string-parsers 7.0.0
+
 ### Version 2.4.0 (2021-03-02)
 
 * PS Compiler 0.14.0
