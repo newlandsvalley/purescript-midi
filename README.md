@@ -1,8 +1,9 @@
 purescript-midi
 ===============
 
+[![Build Status](https://github.com/newlandsvalley/purescript-midi/workflows/CI/badge.svg)](https://github.com/newlandsvalley/purescript-midi/actions)
+
 [![Latest release](http://img.shields.io/github/release/newlandsvalley/purescript-midi.svg)](https://github.com/newlandsvalley/purescript-midi/releases)
-[![Build Status](https://travis-ci.org/newlandsvalley/purescript-midi.svg?branch=master)](https://travis-ci.org/newlandsvalley/purescript-midi)
 
 MIDI support in the browser.
 
