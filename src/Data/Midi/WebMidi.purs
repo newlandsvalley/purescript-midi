@@ -1,14 +1,17 @@
 -- | This module provides plug and play support for MIDI input devices such as
 -- | MIDI keyboards.
 module Data.Midi.WebMidi
-  ( RawMidiEvent
-  , Device
-  , webMidiConnect
-  , detectInputDevices
-  , listen
+  ( Device
+  , RawMidiEvent
   , createDeviceChannel
   , createEventChannel
-  ) where
+  , detectInputDevices
+  , deviceSignal
+  , eventSignal
+  , listen
+  , webMidiConnect
+  )
+  where
 
 import Effect (Effect)
 import Prelude (Unit, flip, bind, const, pure )
@@ -48,7 +51,7 @@ foreign import webMidiConnect :: Effect Boolean
 timedMidiEvent :: RawMidiEvent -> Midi.TimedEvent
 timedMidiEvent rme =
   case parseMidiEvent rme.encodedBinary of
-    Left er ->
+    Left _er ->
       Midi.TimedEvent {
         timeStamp : rme.timeStamp
       , event     : Nothing
@@ -69,13 +72,16 @@ initialDevice =
   , version : ""
  }
 
+
 initialDeviceSignal :: Signal Device
 initialDeviceSignal =
   constant initialDevice
 
+
 deviceSignal :: Device -> Signal Device
 deviceSignal d =
   foldp (flip const) d initialDeviceSignal
+
 
 deviceChannel :: Effect (Channel Device)
 deviceChannel = channel initialDevice
@@ -97,6 +103,7 @@ initialEvent = Midi.TimedEvent
   , event : Nothing
   }
 
+
 initialEventSignal :: Signal  Midi.TimedEvent
 initialEventSignal =
   constant initialEvent
@@ -104,6 +111,7 @@ initialEventSignal =
 eventSignal :: Midi.TimedEvent -> Signal Midi.TimedEvent
 eventSignal rme =
   foldp (flip const) rme initialEventSignal
+
 
 eventChannel :: Effect (Channel Midi.TimedEvent)
 eventChannel = channel initialEvent

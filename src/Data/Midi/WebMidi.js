@@ -131,6 +131,6 @@ var wrapper = function() {
   }
 }();
 
-exports.webMidiConnect = wrapper.webMidiConnect;
-exports.listen = wrapper.listenImpl;
-exports.detectInputDevices = wrapper.detectInputDevicesImpl;
+export var webMidiConnect = wrapper.webMidiConnect;
+export var listen = wrapper.listenImpl;
+export var detectInputDevices = wrapper.detectInputDevicesImpl;

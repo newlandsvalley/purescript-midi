@@ -242,7 +242,7 @@ midiMessages parent =
 moreMessages :: Message -> Parser (List Message)
 moreMessages lastMessage =
   let
-    (Message ticks lastEvent) = lastMessage
+    (Message _ticks lastEvent) = lastMessage
   in
     ((:) lastMessage)
       <$> midiMessages (Just lastEvent)
@@ -619,10 +619,6 @@ consumeOverspill actual expected =
                     count (cnt - expected) int8
         )
 
-
-makeTuple :: forall a b. a -> b -> Tuple a b
-makeTuple a b =
-  Tuple a b
 
 -- utils
 catChars :: List Char -> String
