@@ -1,11 +1,10 @@
-module Test.Parser (parserChecksSuite) where
+module Test.Parser (parserChecksSpec) where
 
 
 import Data.Midi
 
-import Control.Monad.Free (Free)
 import Data.Array (singleton, fromFoldable) as Array
-import Data.Array.NonEmpty (NonEmptyArray, fromNonEmpty)
+import Data.Array.NonEmpty (NonEmptyArray, fromNonEmpty, fromFoldable1)
 import Data.Char (fromCharCode)
 import Data.Either (Either(..))
 import Data.List (List(..), (:), fromFoldable, toUnfoldable)
@@ -20,8 +19,9 @@ import Prelude (Unit, ($), (<$>), (<*>), (<>), (+), (<<<), bind, discard, map, n
 import Test.QuickCheck (Result, (===))
 import Test.QuickCheck.Arbitrary (class Arbitrary)
 import Test.QuickCheck.Gen (Gen, chooseInt, elements, frequency, listOf, oneOf)
-import Test.Unit (TestF, test, suite)
-import Test.Unit.QuickCheck (quickCheck)
+
+import Test.Spec.QuickCheck (quickCheck)
+import Test.Spec (Spec, describe, it)
 
 -- | quickcheck-style tests adapted from the elm-comidi tests courtesy of @rhofour
 
@@ -348,9 +348,10 @@ allEvents :: Generate.Context -> NonEmptyArray (Gen Event)
 allEvents ctx =
   fromNonEmpty $ arbNoteOn :| (channelEvents <> Array.singleton (arbSysEx ctx) <> metaEvents)
 
-weightedEvents :: Generate.Context -> NonEmptyList (Tuple Number (Gen Event))
+
+weightedEvents :: Generate.Context -> NonEmptyArray (Tuple Number (Gen Event))
 weightedEvents ctx =
-  NonEmptyList $
+  fromFoldable1 $ NonEmptyList $
     (Tuple 1.0 arbNoteOn)
       :|
         ( weightedChannelEvents
@@ -381,9 +382,7 @@ arbTestMessage =
 arbTrack :: Gen Track
 arbTrack =
   do
-    count <- chooseInt 0 100
-    -- this doesn't seem to terminate when testing with spago
-    --  count <- chooseInt 0 250
+    count <- chooseInt 0 250
     Track <$> listOf count arbMessage
 
 arbTracks :: Int -> Gen (List Track)
@@ -450,13 +449,14 @@ unsafeFromCharCode :: Int -> Char
 unsafeFromCharCode i =
   fromMaybe 'a' $ fromCharCode i
 
--- | the test suite
-parserChecksSuite :: Free TestF Unit
-parserChecksSuite = do
-  suite "parser" do
-    test "round trip (stream) event" do
-      quickCheck roundTripStreamEventProperty
-    test "round trip message" do
-      quickCheck roundTripMessageProperty
-    test "round trip recording" do
-      quickCheck roundTripRecordingProperty
+-- | the test spec
+parserChecksSpec :: Spec Unit
+parserChecksSpec = do
+  describe "midi" do
+    describe "parser" do
+      it "round trips (stream) event" do
+        quickCheck roundTripStreamEventProperty
+      it "round trips message" do
+        quickCheck roundTripMessageProperty
+      it  "round trips recording" do
+        quickCheck roundTripRecordingProperty

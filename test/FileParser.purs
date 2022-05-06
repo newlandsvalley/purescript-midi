@@ -1,37 +1,41 @@
-module Test.FileParser (parserSuite) where
+module Test.FileParser (parserSpec) where
 
-import Prelude (Unit, bind, discard, ($), (<<<))
+import Prelude (Unit, bind, discard, pure, unit, ($), (<<<))
+import Control.Monad.Error.Class (class MonadThrow)
 import Data.Midi (Recording)
 import Data.Midi.Parser (normalise, parse)
 import Node.Path as Path
 import Effect.Class (liftEffect)
-import Control.Monad.Free (Free)
+import Effect.Aff (Aff)
+import Effect.Exception (Error)
 import Data.Either (Either(..))
 import Node.Buffer (toString)
 import Node.Encoding (Encoding(..))
 import Node.FS.Aff (readFile)
-import Test.Unit (Test, TestF, test, suite, success, failure)
+import Test.Spec (Spec, describe, it)
+import Test.Spec.Assertions (fail)
 
-parserSuite ::  Free TestF Unit
-parserSuite = do
-  suite "file parser" do
-    test "lillasystern" do
-      assertParses "lillasystern.midi"
-    test "frost" do
-      assertParses "frost.midi"
-    test "chord sample" do
-      assertParses "chordsample.midi"
-    test "Carolan's receipt" do
-      assertParses "carolansreceipt.midi"
-    test "Galway hornpipe" do
-      assertParses "Galway-Hornpipe.midi"
-    test "Planxty Burke" do
-      assertParses "plxburke.midi"
-    test "The bonny bonny banks of loch Lomond" do
-      assertParses "lomond.midi"
+parserSpec ::  Spec Unit
+parserSpec = do
+  describe "midi" do
+    describe "file parser" do
+      it "parses lillasystern" do
+        assertParses "lillasystern.midi"
+      it "parses frost" do
+        assertParses "frost.midi"
+      it "parses a chord sample" do
+        assertParses "chordsample.midi"
+      it "parses Carolan's receipt" do
+        assertParses "carolansreceipt.midi"
+      it "parses the Galway hornpipe" do
+        assertParses "Galway-Hornpipe.midi"
+      it "parses Planxty Burke" do
+        assertParses "plxburke.midi"
+      it "parses the bonny banks of Loch Lomond" do
+        assertParses "lomond.midi"
 
 -- | tunnel a binary MIDI file as text and parse it
-assertParses :: String -> Test
+assertParses :: String -> Aff Unit
 assertParses fileName =
   do
     let
@@ -40,7 +44,7 @@ assertParses fileName =
     estr <- liftEffect $ (toString Binary) buffer
     canParse estr
 
-canParse :: String -> Test
+canParse :: forall m. MonadThrow Error m => String -> m Unit
 canParse str =
   let
     fullParse :: String -> Either String Recording
@@ -48,7 +52,7 @@ canParse str =
       (parse <<< normalise) s
   in
     case fullParse str of
-      Right _ ->
-        success
+      Right _ -> 
+        pure unit
       Left err ->
-        failure (err)
+        fail err

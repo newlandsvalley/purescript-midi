@@ -1,17 +1,16 @@
 module Test.Main where
 
-import Prelude (Unit, discard)
+import Prelude (Unit, discard, ($))
 import Effect (Effect)
-import Test.Unit (suite)
-import Test.Unit.Main (runTest)
-import Test.FileParser (parserSuite)
-import Test.Instrument (instrumentChecksSuite)
-import Test.Parser (parserChecksSuite)
+import Effect.Aff (launchAff_)
+import Test.Spec.Reporter (specReporter)
+import Test.Spec.Runner (runSpec)
+import Test.FileParser (parserSpec)
+import Test.Instrument (instrumentChecksSpec)
+import Test.Parser (parserChecksSpec)
 
 main :: Effect Unit
-main =
-  runTest do
-    suite "midi" do
-      parserSuite
-      instrumentChecksSuite
-      parserChecksSuite
+main = launchAff_ $ runSpec [ specReporter] do
+  parserSpec
+  instrumentChecksSpec
+  parserChecksSpec

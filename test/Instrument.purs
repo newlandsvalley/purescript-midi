@@ -1,4 +1,4 @@
-module Test.Instrument (instrumentChecksSuite) where
+module Test.Instrument (instrumentChecksSpec) where
 
 
 import Prelude (Unit, ($), (<$>), discard, map)
@@ -6,12 +6,12 @@ import Data.List (toUnfoldable)
 import Data.Array.NonEmpty (fromNonEmpty)
 import Data.NonEmpty ((:|))
 import Data.Maybe (Maybe(..))
-import Control.Monad.Free (Free)
-import Test.Unit (TestF, test, suite)
-import Test.Unit.Assert (equal) as Assert
 import Test.QuickCheck.Arbitrary (class Arbitrary)
 import Test.QuickCheck (Result(), (===))
-import Test.Unit.QuickCheck (quickCheck)
+
+import Test.Spec.QuickCheck (quickCheck)
+import Test.Spec (Spec, describe, it)
+import Test.Spec.Assertions (shouldEqual)
 import Test.QuickCheck.Gen (Gen, elements)
 import Data.Midi.Instrument (InstrumentName(..), gleitzmanName, gleitzmanNames,
     instrumentNames, readGleitzman)
@@ -58,12 +58,13 @@ roundTripGleitzmanProperty (TestGleitzman s) =
   in
     (Just s :: Maybe String) === name
 
-instrumentChecksSuite :: Free TestF Unit
-instrumentChecksSuite = do
-  suite "instrument" do
-    test "unknown" do
-      Assert.equal Nothing (readGleitzman "unknown")
-    test "round trip instrument name" do
+instrumentChecksSpec :: Spec Unit
+instrumentChecksSpec = do
+  describe "instrument" do
+    it "handles an unknown instrument name" do
+      Nothing `shouldEqual` (readGleitzman "unknown")
+    it "round trips instrument names" do
       quickCheck roundTripInstrumentProperty
-    test "round trip Gleitzman name" do
+    it "round trips Gleitzman names" do
       quickCheck roundTripGleitzmanProperty
+      
