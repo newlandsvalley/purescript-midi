@@ -1,6 +1,11 @@
 # Changelog
 
-### Version 3,1,0 (2022-03-21)
+### Version 4.0,0 (2022-04-06)
+
+* PS Compiler 0.15.0
+* (replace test-unit with spec)
+
+### Version 3.1.0 (2022-03-21)
 
 * PS Compiler 0.14.7
 * Enforced upgrade because of breaking changes in string-parsers 7.0.0
