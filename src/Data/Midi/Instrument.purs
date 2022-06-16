@@ -80,8 +80,14 @@ instance ordInstrumentName :: Ord InstrumentName where
 instance showInstrumentName :: Show InstrumentName where
   show = showName
 
--- | convert a MIDI instrument name to a Gleitxman string
+-- | convert a MIDI instrument name to a Gleitzman instrument name string
 -- | for example ElectricPiano1 -> electric_piano_1
+-- |
+-- | A Gleitzman name is the name of a MIDI instrument supported by Benjamin Gleitzman's
+-- | [midi-js-soundfonts](https://github.com/gleitz/midi-js-soundfonts).  Fortunately, 
+-- | these names are identical across all three of the main soundfont providers - 
+-- | FluidR3_GM, MusyngKite and FatBoy.  This makes the midi package instrument naming 
+-- | compatible with the soundfonts package.
 gleitzmanName :: InstrumentName -> String
 gleitzmanName =
   toGleitzmanName <<< showName

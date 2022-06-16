@@ -23,8 +23,7 @@ import Data.Tuple (Tuple(..))
 import Data.Unfoldable (replicateA)
 import Prelude (Unit, unit, ($), (<$>), (<$), (<*>), (*>), (+), (-), (>), (<), (==), (>=), (<=), (&&), (>>=), (>>>), (<<<), (<>), map, pure, show, void)
 import StringParser (Parser, runParser, try, fail)
-import StringParser.Combinators (choice, many, many1Till, (<?>))
--- import Text.Parsing.StringParser.String (anyChar, satisfy, string, char, noneOf)
+import StringParser.Combinators (choice, many1Till, (<?>))
 import StringParser.CodePoints (anyChar, satisfy, string, char, noneOf)
 
 {- debugging utilities
@@ -89,16 +88,6 @@ signedInt8 =
   )
     <$> int8
 
-{-}
-signedInt8 =
-  (\i ->
-    if (topBitSet i) then
-      i - 256
-    else
-      i
-  )
-    <$> int8
--}
 
 -- parse a specific binary 8 bit integer
 bchar :: Int -> Parser Int
@@ -169,22 +158,13 @@ varInt :: Parser Int
 varInt =
   foldl (\acc -> \n -> (shl acc 7) + n) 0 <$> varIntHelper
 
-{- old, buggy version for high values of the Int
-varInt :: Parser Int
-varInt =
-  int8
-    >>= (\n ->
-          if (topBitSet n) then
-            ((+) ((clearTopBit >>> shiftLeftSeven) n)) <$> varInt
-          else
-            pure n
-        )
--}
 
+{-
 -- just for debug purposes - consume the rest of the input
 rest :: Parser (List Char)
 rest =
   many anyChar
+-}
 
 -- top level parsers
 
