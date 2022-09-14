@@ -1,6 +1,10 @@
 # Changelog
 
-### Version 4.0,0 (2022-04-06)
+### Version 4.0.1 (pending)
+* PS Compiler 0.15.4
+* add dependency on bifunctors
+
+### Version 4.0.0 (2022-04-06)
 
 * PS Compiler 0.15.0
 * (replace test-unit with spec)

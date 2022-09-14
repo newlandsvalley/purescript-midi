@@ -5,6 +5,7 @@ You can edit this file as you like.
 { name = "midi"
 , dependencies =
   [ "arrays"
+  , "bifunctors"
   , "control"
   , "effect"
   , "either"

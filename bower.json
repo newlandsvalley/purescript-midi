@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "purescript-prelude": "^6.0.0",
+    "purescript-bifunctors": "^6.0.0",
     "purescript-lists": "^7.0.0",
     "purescript-string-parsers": "^8.0.0",
     "purescript-integers": "^6.0.0",
