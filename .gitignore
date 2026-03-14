@@ -8,3 +8,4 @@
 /.psa*
 /.purs-repl
 /.spago/
+/.spec-results

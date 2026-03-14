@@ -1,7 +1,8 @@
 # Changelog
 
 ### Version 4.0.1 (pending)
-* PS Compiler 0.15.4
+* PS Compiler 0.15.15
+* use new spago 1.0.3
 * add dependency on bifunctors
 
 ### Version 4.0.0 (2022-04-06)

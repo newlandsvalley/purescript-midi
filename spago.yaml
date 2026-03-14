@@ -1,0 +1,37 @@
+package:
+  name: midi
+  dependencies:
+    - arrays
+    - bifunctors
+    - control
+    - effect
+    - either
+    - foldable-traversable
+    - integers
+    - lists
+    - maybe
+    - ordered-collections
+    - prelude
+    - signal
+    - string-parsers
+    - strings
+    - tuples
+    - unfoldable
+  test:
+    main: Test.Main
+    dependencies:
+      - aff
+      - exceptions
+      - node-buffer
+      - node-path
+      - node-fs
+      - nonempty
+      - spec
+      - spec-quickcheck
+      - spec-node
+      - transformers
+      - quickcheck
+workspace:
+  extraPackages: {}
+  packageSet:
+    registry: 73.3.0
