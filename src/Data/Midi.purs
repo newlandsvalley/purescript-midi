@@ -8,7 +8,7 @@ module Data.Midi
         , Recording(..)
         , Ticks
         , Byte
-        , Channel
+        , Channel(..)
         , MidiPitch(..)
         , Velocity
         , SysExFlavour(..)
@@ -32,7 +32,11 @@ type Byte = Int
 
 -- | A MIDI Channel in the range ( 0 <= channel <= 15).
 -- | See the MIDI specification - page 7.
-type Channel = Int
+newtype Channel = Channel Int
+
+derive newtype instance Eq Channel
+derive newtype instance Ord Channel
+derive newtype instance Show Channel
 
 -- | MidiPitch
 -- | A MIDI note number representing a pitch in the range (0 <= note <= 127).
@@ -76,7 +80,7 @@ data Event
     | Lyrics String
     | Marker String
     | CuePoint String
-    | ChannelPrefix Int
+    | ChannelPrefix Channel
     | Tempo Int
     | SMPTEOffset Int Int Int Int Int
     | TimeSignature Int Int Int Int

@@ -84,6 +84,11 @@ midiPitch :: Parser MidiPitch
 midiPitch =
   MidiPitch <$> int8
 
+-- parse a binary 8 bit integer which represents a MidiPitch
+midiChannel :: Parser Channel
+midiChannel =
+  Channel <$> int8
+
 -- parse a signed binary 8 bit integer
 signedInt8 :: Parser Int
 signedInt8 =
@@ -361,7 +366,7 @@ cuePoint =
 
 channelPrefix :: Parser Event
 channelPrefix =
-  ChannelPrefix <$> (bchar 0x20 *> bchar 0x01 *> int8 <?> "channel prefix")
+  ChannelPrefix <$> (bchar 0x20 *> bchar 0x01 *> midiChannel <?> "channel prefix")
 
 tempoChange :: Parser Event
 tempoChange =
@@ -447,7 +452,7 @@ noteOn =
   buildNote cmd note velocity =
     let
       channel =
-        and cmd 0x0F
+        Channel $ and cmd 0x0F
     in
       case (velocity == 0) of
         true ->
@@ -471,7 +476,7 @@ noteAfterTouch =
   buildNoteAfterTouch <$> brange 0xA0 0xAF <*> midiPitch <*> int8 <?> "note after touch"
 
   where
-  buildNoteAfterTouch :: Int -> MidiPitch -> Int -> Event
+  buildNoteAfterTouch :: Int -> MidiPitch -> Velocity -> Event
   buildNoteAfterTouch cmd note pressure =
     channelNoteBuilder NoteAfterTouch cmd note pressure
 
@@ -565,29 +570,29 @@ buildRecording h ts =
   Recording { header: h, tracks : ts }
 
 -- abstract builders that construct MidiEvents that all have the same shape
-channelBuilder3 :: (Int -> Int -> Int -> Event) -> Int -> Int -> Int -> Event
+channelBuilder3 :: (Channel -> Int -> Int -> Event) -> Int -> Int -> Int -> Event
 channelBuilder3 construct cmd x y =
   let
     channel =
-      and cmd 0x0F
+      Channel $ and cmd 0x0F
   in
     construct channel x y
 
-channelBuilder2 :: (Int -> Int -> Event) -> Int -> Int -> Event
+channelBuilder2 :: (Channel -> Int -> Event) -> Int -> Int -> Event
 channelBuilder2 construct cmd x =
   let
     channel =
-      and cmd 0x0F
+      Channel $ and cmd 0x0F
   in
     construct channel x
 
-channelNoteBuilder :: (Int -> MidiPitch -> Int -> Event) -> Int -> MidiPitch -> Int -> Event
-channelNoteBuilder construct cmd x y =
+channelNoteBuilder :: (Channel -> MidiPitch -> Velocity -> Event) -> Int -> MidiPitch -> Velocity -> Event
+channelNoteBuilder construct cmd note velocity =
   let
     channel =
-      and cmd 0x0F
+      Channel $ and cmd 0x0F
   in
-    construct channel x y
+    construct channel note velocity
 
 buildSysEx :: Int -> Nel.NonEmptyList Char -> Event
 buildSysEx sysExType bytes =

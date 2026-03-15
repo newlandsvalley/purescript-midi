@@ -47,25 +47,25 @@ event ctx evt =
             0xF0 : bytes
 
     -- channel events
-    NoteOn channel (MidiPitch note) velocity ->
+    NoteOn (Channel channel) (MidiPitch note) velocity ->
       (0x90 + channel) : note : velocity : Nil
 
-    NoteOff channel (MidiPitch note) velocity ->
+    NoteOff (Channel channel) (MidiPitch note) velocity ->
       (0x80 + channel) : note : velocity : Nil
 
-    NoteAfterTouch channel (MidiPitch note) velocity ->
+    NoteAfterTouch (Channel channel) (MidiPitch note) velocity ->
       (0xA0 + channel) : note : velocity : Nil
 
-    ControlChange channel controllerNumber value ->
+    ControlChange (Channel channel) controllerNumber value ->
       (0xB0 + channel) : controllerNumber : value : Nil
 
-    ProgramChange channel value ->
+    ProgramChange (Channel channel) value ->
       (0xC0 + channel) : value : Nil
 
-    ChannelAfterTouch channel velocity ->
+    ChannelAfterTouch (Channel channel) velocity ->
       ( 0xD0 + channel) : velocity : Nil
 
-    PitchBend channel bend ->
+    PitchBend (Channel channel) bend ->
       let
         lower =
           and bend 127

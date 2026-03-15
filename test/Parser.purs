@@ -56,8 +56,8 @@ instance testRecordingarb :: Arbitrary TestRecording where
   arbitrary = arbTestRecording
 
 -- generators
-arbChannel :: Gen Int
-arbChannel = chooseInt 0 15
+arbChannel :: Gen Channel
+arbChannel = Channel <$> chooseInt 0 15
 
 arbNote :: Gen MidiPitch
 arbNote = MidiPitch <$> chooseInt 0 127
