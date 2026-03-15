@@ -9,7 +9,7 @@ module Data.Midi
         , Ticks
         , Byte
         , Channel
-        , Note
+        , MidiPitch(..)
         , Velocity
         , SysExFlavour(..)
         ) where
@@ -34,10 +34,15 @@ type Byte = Int
 -- | See the MIDI specification - page 7.
 type Channel = Int
 
+-- | MidiPitch
 -- | A MIDI note number representing a pitch in the range (0 <= note <= 127).
 -- | See the MIDI specification page 42 - Note Number.
 -- | 0 in a NoteOn message is equivalent to NoteOff.
-type Note = Int
+newtype MidiPitch = MidiPitch Int
+
+derive newtype instance Eq MidiPitch
+derive newtype instance Ord MidiPitch
+derive newtype instance Show MidiPitch
 
 -- | An indication of the pressure applied to a key on a MIDI isntrument and
 -- | hence of note volume. See the MIDI specification page 42 - Volume.
@@ -81,9 +86,9 @@ data Event
     | SysEx SysExFlavour (Nel.NonEmptyList Byte)
     | Unspecified Int (List Byte)
       -- channel messages
-    | NoteOn Channel Note Velocity
-    | NoteOff Channel Note Velocity
-    | NoteAfterTouch Channel Note Velocity
+    | NoteOn Channel MidiPitch Velocity
+    | NoteOff Channel MidiPitch Velocity
+    | NoteAfterTouch Channel MidiPitch Velocity
     | ControlChange Channel Int Int
     | ProgramChange Channel Int
     | ChannelAfterTouch Channel Velocity

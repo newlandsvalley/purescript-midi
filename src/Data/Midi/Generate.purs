@@ -47,13 +47,13 @@ event ctx evt =
             0xF0 : bytes
 
     -- channel events
-    NoteOn channel note velocity ->
+    NoteOn channel (MidiPitch note) velocity ->
       (0x90 + channel) : note : velocity : Nil
 
-    NoteOff channel note velocity ->
+    NoteOff channel (MidiPitch note) velocity ->
       (0x80 + channel) : note : velocity : Nil
 
-    NoteAfterTouch channel note velocity ->
+    NoteAfterTouch channel (MidiPitch note) velocity ->
       (0xA0 + channel) : note : velocity : Nil
 
     ControlChange channel controllerNumber value ->

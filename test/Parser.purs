@@ -59,8 +59,8 @@ instance testRecordingarb :: Arbitrary TestRecording where
 arbChannel :: Gen Int
 arbChannel = chooseInt 0 15
 
-arbNote :: Gen Int
-arbNote = chooseInt 0 127
+arbNote :: Gen MidiPitch
+arbNote = MidiPitch <$> chooseInt 0 127
 
 arbVelocity :: Gen Int
 arbVelocity = chooseInt 0 127

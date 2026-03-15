@@ -78,6 +78,12 @@ int8 :: Parser Int
 int8 =
   toCharCode <$> anyChar
 
+
+-- parse a binary 8 bit integer which represents a MidiPitch
+midiPitch :: Parser MidiPitch
+midiPitch =
+  MidiPitch <$> int8
+
 -- parse a signed binary 8 bit integer
 signedInt8 :: Parser Int
 signedInt8 =
@@ -433,11 +439,11 @@ trackEndMessage =
 
 noteOn :: Parser Event
 noteOn =
-  buildNote <$> brange 0x90 0x9F <*> int8 <*> int8 <?> "note on"
+  buildNote <$> brange 0x90 0x9F <*> midiPitch <*> int8 <?> "note on"
 
   where
   -- build NoteOn (unless the velocity is zero in which case NoteOff)
-  buildNote :: Int -> Int -> Int -> Event
+  buildNote :: Int -> MidiPitch -> Velocity -> Event
   buildNote cmd note velocity =
     let
       channel =
@@ -453,21 +459,21 @@ noteOn =
 
 noteOff :: Parser Event
 noteOff =
-  buildNoteOff <$> brange 0x80 0x8F <*> int8 <*> int8 <?> "note off"
+  buildNoteOff <$> brange 0x80 0x8F <*> midiPitch <*> int8 <?> "note off"
 
   where
-  buildNoteOff :: Int -> Int -> Int -> Event
+  buildNoteOff :: Int -> MidiPitch -> Velocity -> Event
   buildNoteOff cmd note velocity =
-    channelBuilder3 NoteOff cmd note velocity
+    channelNoteBuilder NoteOff cmd note velocity
 
 noteAfterTouch :: Parser Event
 noteAfterTouch =
-  buildNoteAfterTouch <$> brange 0xA0 0xAF <*> int8 <*> int8 <?> "note after touch"
+  buildNoteAfterTouch <$> brange 0xA0 0xAF <*> midiPitch <*> int8 <?> "note after touch"
 
   where
-  buildNoteAfterTouch :: Int -> Int -> Int -> Event
+  buildNoteAfterTouch :: Int -> MidiPitch -> Int -> Event
   buildNoteAfterTouch cmd note pressure =
-    channelBuilder3 NoteAfterTouch cmd note pressure
+    channelNoteBuilder NoteAfterTouch cmd note pressure
 
 controlChange :: Parser Event
 controlChange =
@@ -514,13 +520,13 @@ runningStatus parent =
     -- RunningStatus <$> brange 0x00 0x7F <*> int8 <?> "running status"
     case parent of
         Just (NoteOn status _ _) ->
-            (NoteOn status) <$> int8 <*> int8 <?> "note on running status"
+            (NoteOn status) <$> midiPitch <*> int8 <?> "note on running status"
 
         Just (NoteOff status _ _) ->
-            (NoteOff status) <$> int8 <*> int8 <?> "note off running status"
+            (NoteOff status) <$> midiPitch <*> int8 <?> "note off running status"
 
         Just (NoteAfterTouch status _ _) ->
-            (NoteAfterTouch status) <$> int8 <*> int8 <?> "note aftertouch running status"
+            (NoteAfterTouch status) <$> midiPitch <*> int8 <?> "note aftertouch running status"
 
         Just (ControlChange status _ _) ->
             (ControlChange status) <$> int8 <*> int8 <?> "control change running status"
@@ -574,6 +580,14 @@ channelBuilder2 construct cmd x =
       and cmd 0x0F
   in
     construct channel x
+
+channelNoteBuilder :: (Int -> MidiPitch -> Int -> Event) -> Int -> MidiPitch -> Int -> Event
+channelNoteBuilder construct cmd x y =
+  let
+    channel =
+      and cmd 0x0F
+  in
+    construct channel x y
 
 buildSysEx :: Int -> Nel.NonEmptyList Char -> Event
 buildSysEx sysExType bytes =
