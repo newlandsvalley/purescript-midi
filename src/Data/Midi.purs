@@ -18,6 +18,7 @@ import Prelude (class Show, class Eq, class Ord)
 import Data.List (List)
 import Data.List.NonEmpty (NonEmptyList) as Nel
 import Data.Maybe (Maybe)
+import Data.Newtype (class Newtype)
 import Data.Generic.Rep
 import Data.Eq.Generic (genericEq)
 import Data.Ord.Generic (genericCompare)
@@ -34,6 +35,8 @@ type Byte = Int
 -- | See the MIDI specification - page 7.
 newtype Channel = Channel Int
 
+derive instance Newtype Channel _
+
 derive newtype instance Eq Channel
 derive newtype instance Ord Channel
 derive newtype instance Show Channel
@@ -43,6 +46,8 @@ derive newtype instance Show Channel
 -- | See the MIDI specification page 42 - Note Number.
 -- | 0 in a NoteOn message is equivalent to NoteOff.
 newtype MidiPitch = MidiPitch Int
+
+derive instance Newtype MidiPitch _
 
 derive newtype instance Eq MidiPitch
 derive newtype instance Ord MidiPitch
