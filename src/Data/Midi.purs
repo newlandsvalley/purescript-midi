@@ -12,8 +12,8 @@ module Data.Midi
         , MidiPitch(..)
         , Velocity
         , SysExFlavour(..)
-        , noteOn
-        , noteOff
+        , buildNoteOn
+        , buildNoteOff
         ) where
 
 import Prelude (class Show, class Eq, class Ord)
@@ -182,13 +182,13 @@ instance eqRecording :: Eq Recording where
 
 -- | shorthand builder for NoteOn messages
 -- | note that this bypasses type safety so use with discretion
-noteOn :: Int -> Int -> Int -> Event 
-noteOn channel pitch velocity =
+buildNoteOn :: Int -> Int -> Int -> Event 
+buildNoteOn channel pitch velocity =
   NoteOn (Channel channel) (MidiPitch pitch) velocity
   
 -- | shorthand builder for NoteOff messages
 -- | note that this bypasses type safety so use with discretion
-noteOff :: Int -> Int -> Int -> Event 
-noteOff channel pitch velocity =
+buildNoteOff :: Int -> Int -> Int -> Event 
+buildNoteOff channel pitch velocity =
   NoteOff (Channel channel) (MidiPitch pitch) velocity
 
