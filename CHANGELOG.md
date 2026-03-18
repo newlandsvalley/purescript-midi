@@ -2,7 +2,7 @@
  
 ### Version 5.0.0 (pending)
 * Improve type safety. The type `Note` now becomes the newtype `MidiPitch`. `Channel` is now a newtype.
-* PS Compiler 0.15.15
+* PS Compiler 0.15.16
 * use new spago 1.0.3
 * add dependency on bifunctors
 
