@@ -17,7 +17,7 @@ import Data.Map (Map, fromFoldable, lookup)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String.CodeUnits (fromCharArray, toCharArray)
 import Data.Tuple (Tuple(..), fst, snd)
-import Prelude (class Eq, class Ord, class Show, compare, eq, map, ($), (<<<), (==), (>))
+import Prelude (class Eq, class Ord, class Show, map, ($), (<<<), (==), (>))
 
 -- | MIDI instrument names
 data InstrumentName =
@@ -64,6 +64,9 @@ data InstrumentName =
   | TubularBells        | Vibraphone          | Viola
   | Violin              | VoiceOohs           | Whistle
   | Woodblock           | Xylophone
+  derive (Eq, Ord)
+
+-- The comment below was true for earlier versions of purs - hopefully OK now in 0.15.17
 
 -- deriving Eq gives an IncompleteExhaustivityCheck warning at about
 -- 100 elements in the enumeration and defining it explicitly
@@ -71,11 +74,13 @@ data InstrumentName =
 -- deriving Ord is just disastrous in terms of code bloat
 -- and both hammer compile time
 
+{-
 instance eqInstrumentName :: Eq InstrumentName where
   eq a b = eq (showName a) (showName b)
 
 instance ordInstrumentName :: Ord InstrumentName where
   compare a b = compare (showName a) (showName b)
+-}
 
 instance showInstrumentName :: Show InstrumentName where
   show = showName

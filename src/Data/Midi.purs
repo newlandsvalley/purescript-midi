@@ -22,8 +22,6 @@ import Data.List.NonEmpty (NonEmptyList) as Nel
 import Data.Maybe (Maybe)
 import Data.Newtype (class Newtype)
 import Data.Generic.Rep
-import Data.Eq.Generic (genericEq)
-import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 
 -- | A Tick represents a MIDI time increment.  See the MIDI Specification,
@@ -36,11 +34,12 @@ type Byte = Int
 -- | A MIDI Channel in the range ( 0 <= channel <= 15).
 -- | See the MIDI specification - page 7.
 newtype Channel = Channel Int
+  derive (Eq, Ord)
 
 derive instance Newtype Channel _
 
-derive newtype instance Eq Channel
-derive newtype instance Ord Channel
+-- derive newtype instance Eq Channel
+-- derive newtype instance Ord Channel
 derive newtype instance Show Channel
 
 -- | MidiPitch
@@ -48,11 +47,10 @@ derive newtype instance Show Channel
 -- | See the MIDI specification page 42 - Note Number.
 -- | 0 in a NoteOn message is equivalent to NoteOff.
 newtype MidiPitch = MidiPitch Int
+  derive (Eq, Ord)
 
 derive instance Newtype MidiPitch _
 
-derive newtype instance Eq MidiPitch
-derive newtype instance Ord MidiPitch
 derive newtype instance Show MidiPitch
 
 -- | An indication of the pressure applied to a key on a MIDI isntrument and
@@ -64,14 +62,11 @@ type Velocity = Int
 data SysExFlavour
     = F0 -- normal
     | F7 -- escaped
+    derive (Eq, Ord)
 
 derive instance genericSysExFlavour :: Generic SysExFlavour _
 instance showSysExFlavour :: Show SysExFlavour where
   show = genericShow
-instance eqSysExFlavour :: Eq SysExFlavour where
-  eq = genericEq
-instance ordSysExFlavour :: Ord SysExFlavour where
-  compare = genericCompare
 
 -- | A Midi Event.
 -- |
@@ -104,14 +99,11 @@ data Event
     | ProgramChange Channel Int
     | ChannelAfterTouch Channel Velocity
     | PitchBend Channel Int
+    derive (Eq, Ord)
 
 derive instance genericEvent :: Generic Event _
 instance showEvent :: Show Event where
   show = genericShow
-instance eqEvent :: Eq Event where
-  eq = genericEq
-instance ordEvent :: Ord Event where
-  compare = genericCompare
 
 -- | a timestamped parsed MIDI Event message for use with Web MIDI
 newtype TimedEvent = TimedEvent {
@@ -126,30 +118,21 @@ instance showTimedEvent :: Show TimedEvent where
 
 -- | A MIDI Message.
 data Message = Message Ticks Event
+  derive (Eq, Ord)
 
 derive instance genericMessage :: Generic Message _
 instance showMessage :: Show Message where
   show = genericShow
-instance eqMessage :: Eq Message where
-  eq = genericEq
-instance ordMessage :: Ord Message where
-  compare = genericCompare
 
 -- | A Midi Track.
 newtype Track = Track
   (List Message)
+  derive (Eq, Ord)
 
 derive instance genericTrack :: Generic Track _
 
 instance showTrack :: Show Track where
   show = genericShow
-
-instance eqTrack :: Eq Track where
-  eq = genericEq
-
-instance ordTrack :: Ord Track where
-  compare = genericCompare
-
 
 -- | The Midi Header.
 newtype Header = Header
@@ -157,28 +140,24 @@ newtype Header = Header
     , trackCount :: Int
     , ticksPerBeat :: Int
     }
+    derive (Eq)
 
 derive instance genericHeader :: Generic Header _
 
 instance showHeader :: Show Header where
   show = genericShow
 
-instance eqHeader :: Eq Header where
-  eq = genericEq
-
 -- | A Midi Recording.
 newtype Recording = Recording
     { header :: Header
     , tracks :: List Track
     }
+    derive (Eq)
 
 derive instance genericRecording :: Generic Recording _
 
 instance showRecording :: Show Recording where
   show = genericShow
-
-instance eqRecording :: Eq Recording where
-  eq = genericEq
 
 -- | shorthand builder for NoteOn messages
 -- | note that this bypasses type safety so use with discretion
